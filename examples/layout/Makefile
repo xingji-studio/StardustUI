@@ -78,11 +78,13 @@ XAPI_OUT_DIR := $(ROOT_DIR)/out/xapi
 XAPI_START_OBJECT := $(XAPI_OUT_DIR)/start.cpp.o
 XAPI_CORE_OBJECTS = $(shell find $(XAPI_OUT_DIR) -maxdepth 1 -name '*.o' | grep -v 'constart.cpp.o' | grep -v 'start.cpp.o')
 XAPI_HEADERS := $(shell find $(XAPI_DIR)/include -type f \( -name '*.h' -o -name '*.hpp' \))
+KCONFIG_AUTOCONF ?= $(abspath $(ROOT_DIR)/include/generated/autoconf.h)
+XAPI_HEADERS += $(KCONFIG_AUTOCONF)
 
 SRC_FILES += $(FRAMEWORK_DIR)/src/platforms/xj380.cpp
 OBJ_FILES += $(OBJ_DIR)/framework/platforms/xj380.o
 CPPFLAGS += -DXJ380
-CXXFLAGS ?= -O0 -Wall -g -ffreestanding -fno-builtin -m64 -mstackrealign -std=gnu++17 -fno-stack-protector -fno-exceptions -fno-rtti -fshort-wchar -nostdinc -Wno-write-strings
+CXXFLAGS ?= -O0 -Wall -g -ffreestanding -fno-builtin -m64 -mstackrealign -std=gnu++17 -fno-stack-protector -fno-exceptions -fno-rtti -fshort-wchar -nostdinc -include $(KCONFIG_AUTOCONF) -Wno-write-strings
 LDFLAGS ?= -Ttext=0x200000 -e xapi_start
 else
 $(error Unsupported PLATFORM '$(PLATFORM)'. Use PLATFORM=windows, PLATFORM=linux, or PLATFORM=xj380)
