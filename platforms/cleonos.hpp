@@ -4,9 +4,11 @@
 using window_message_proc = void (*)(unsigned long long type, unsigned long long h_data, unsigned long long l_data);
 
 constexpr unsigned long long kWindowMessageMove = 1;
-constexpr unsigned long long kWindowMessageButton = 2;
-constexpr unsigned long long kWindowMessageKey = 3;
-constexpr unsigned long long kWindowMessageFocus = 4;
+constexpr unsigned long long kWindowMessageLeftButtonDown = 2;
+constexpr unsigned long long kWindowMessageLeftButtonUp = 3;
+constexpr unsigned long long kWindowMessageLeftButtonClick = 4;
+constexpr unsigned long long kWindowMessageChar = 5;
+constexpr unsigned long long kWindowMessageSpecialChar = 6;
 
 bool create_window(char *title, int width, int height, unsigned long long *handle);
 

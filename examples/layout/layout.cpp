@@ -11,6 +11,32 @@ TextBox* g_history_box = nullptr;
 TextBox* g_input_box = nullptr;
 Lable* g_status_label = nullptr;
 
+#if defined(STARDUSTUI_CLEONOS)
+constexpr int kDemoWindowWidth = 860;
+constexpr int kDemoWindowHeight = 560;
+constexpr int kDemoRootWidth = 820;
+constexpr int kDemoRootHeight = 520;
+constexpr int kDemoSidebarWidth = 220;
+constexpr int kDemoContactHeight = 48;
+constexpr int kDemoAvatarSize = 24;
+constexpr int kDemoHeaderHeight = 72;
+constexpr int kDemoComposerHeight = 120;
+constexpr int kDemoComposerRowHeight = 70;
+constexpr int kDemoSendButtonWidth = 96;
+#else
+constexpr int kDemoWindowWidth = 1040;
+constexpr int kDemoWindowHeight = 680;
+constexpr int kDemoRootWidth = 1000;
+constexpr int kDemoRootHeight = 640;
+constexpr int kDemoSidebarWidth = 260;
+constexpr int kDemoContactHeight = 54;
+constexpr int kDemoAvatarSize = 28;
+constexpr int kDemoHeaderHeight = 84;
+constexpr int kDemoComposerHeight = 150;
+constexpr int kDemoComposerRowHeight = 92;
+constexpr int kDemoSendButtonWidth = 120;
+#endif
+
 void append_text(stardustui::string& target, const char* text) {
     if (text != nullptr) {
         target.append(text);
@@ -73,14 +99,14 @@ void on_send_click() {
 }
 
 static int layout_main_impl(int, char**, char**) {
-    Window window("StardustUI Chat Demo", 1040, 680);
+    Window window("StardustUI Chat Demo", kDemoWindowWidth, kDemoWindowHeight);
 
-    FlexLayout root(1000, 640);
+    FlexLayout root(kDemoRootWidth, kDemoRootHeight);
     root.set_pos(20, 20);
     root.set_direction(FlexLayout::Row);
     root.set_gap(0);
 
-    FlexLayout sidebar(260, 0);
+    FlexLayout sidebar(kDemoSidebarWidth, 0);
     sidebar.set_direction(FlexLayout::Column);
     sidebar.set_gap(12);
     sidebar.set_padding(18);
@@ -110,33 +136,33 @@ static int layout_main_impl(int, char**, char**) {
     contact_rules.set_on_hover_sytel(contact_hover);
     contact_rules.set_on_click_sytel(contact_click);
 
-    FlexLayout contact_one(0, 54);
+    FlexLayout contact_one(0, kDemoContactHeight);
     contact_one.set_direction(FlexLayout::Row);
     contact_one.set_gap(10);
     contact_one.set_align_items(FlexLayout::AlignCenter);
-    Canvas avatar_one(28, 28);
+    Canvas avatar_one(kDemoAvatarSize, kDemoAvatarSize);
     paint_static_avatar(avatar_one, draw_avatar_one);
-    Button chat_one("Project Nebula", 0, 44, contact_rules);
+    Button chat_one("Project Nebula", 0, kDemoContactHeight - 10, contact_rules);
     contact_one.addComponent(avatar_one, 0);
     contact_one.addComponent(chat_one, 1);
 
-    FlexLayout contact_two(0, 54);
+    FlexLayout contact_two(0, kDemoContactHeight);
     contact_two.set_direction(FlexLayout::Row);
     contact_two.set_gap(10);
     contact_two.set_align_items(FlexLayout::AlignCenter);
-    Canvas avatar_two(28, 28);
+    Canvas avatar_two(kDemoAvatarSize, kDemoAvatarSize);
     paint_static_avatar(avatar_two, draw_avatar_two);
-    Button chat_two("Rendering Squad", 0, 44, contact_rules);
+    Button chat_two("Rendering Squad", 0, kDemoContactHeight - 10, contact_rules);
     contact_two.addComponent(avatar_two, 0);
     contact_two.addComponent(chat_two, 1);
 
-    FlexLayout contact_three(0, 54);
+    FlexLayout contact_three(0, kDemoContactHeight);
     contact_three.set_direction(FlexLayout::Row);
     contact_three.set_gap(10);
     contact_three.set_align_items(FlexLayout::AlignCenter);
-    Canvas avatar_three(28, 28);
+    Canvas avatar_three(kDemoAvatarSize, kDemoAvatarSize);
     paint_static_avatar(avatar_three, draw_avatar_three);
-    Button chat_three("Design Review", 0, 44, contact_rules);
+    Button chat_three("Design Review", 0, kDemoContactHeight - 10, contact_rules);
     contact_three.addComponent(avatar_three, 0);
     contact_three.addComponent(chat_three, 1);
 
@@ -151,7 +177,7 @@ static int layout_main_impl(int, char**, char**) {
     main_column.set_gap(12);
     main_column.set_padding(12);
 
-    FlexLayout header_content(0, 84);
+    FlexLayout header_content(0, kDemoHeaderHeight);
     header_content.set_direction(FlexLayout::Row);
     header_content.set_padding(20);
     header_content.set_align_items(FlexLayout::AlignCenter);
@@ -215,7 +241,7 @@ static int layout_main_impl(int, char**, char**) {
     history_box.set_text(history_text);
     g_history_box = &history_box;
 
-    FlexLayout composer(0, 150);
+    FlexLayout composer(0, kDemoComposerHeight);
     composer.set_direction(FlexLayout::Column);
     composer.set_gap(12);
     composer.set_padding(16);
@@ -233,12 +259,12 @@ static int layout_main_impl(int, char**, char**) {
     input_rules.set_on_hover_sytel(history_hover);
     input_rules.set_on_click_sytel(input_click);
 
-    FlexLayout composer_row(0, 92);
+    FlexLayout composer_row(0, kDemoComposerRowHeight);
     composer_row.set_direction(FlexLayout::Row);
     composer_row.set_gap(12);
     composer_row.set_align_items(FlexLayout::AlignStretch);
 
-    TextBox input_box(0, 92, true, input_rules);
+    TextBox input_box(0, kDemoComposerRowHeight, true, input_rules);
     input_box.set_text("");
     g_input_box = &input_box;
 
@@ -263,7 +289,7 @@ static int layout_main_impl(int, char**, char**) {
     send_rules.set_on_hover_sytel(send_hover);
     send_rules.set_on_click_sytel(send_click);
 
-    Button send_button("Send", 120, 92, send_rules);
+    Button send_button("Send", kDemoSendButtonWidth, kDemoComposerRowHeight, send_rules);
     send_button.callback(on_send_click);
 
     Lable status_label("Flex chat demo ready", 13, 0x68758BFF);

@@ -2,6 +2,12 @@
 
 #include <stdio.h>
 
+#ifdef STARDUSTUI_CLEONOS
+extern "C" {
+#include <cleonos_syscall.h>
+}
+#endif
+
 #ifdef XJ380
 #include "../platforms/xj380/xapi/xtuiapi.h"
 #endif
@@ -30,7 +36,9 @@ bool exists(const char* path)
         return false;
     }
 
-#ifdef XJ380
+#ifdef STARDUSTUI_CLEONOS
+    return cleonos_sys_fs_stat_type(path) != 0ULL;
+#elif defined(XJ380)
     XFILE* file = xapi_OpenFile((char*)path);
     if (file == nullptr) {
         return false;
@@ -60,7 +68,9 @@ bool remove(const char* path)
         return false;
     }
 
-#ifdef XJ380
+#ifdef STARDUSTUI_CLEONOS
+    return cleonos_sys_fs_remove(path) != 0ULL;
+#elif defined(XJ380)
     return (long long)xapi_DeleteFile((char*)path) >= 0;
 #else
     return ::remove(path) == 0;
@@ -80,7 +90,42 @@ bool read_bytes(const char* path, vector<byte>& out)
         return false;
     }
 
-#ifdef XJ380
+#ifdef STARDUSTUI_CLEONOS
+    const unsigned long long length = cleonos_sys_fs_stat_size(path);
+    if (length == (unsigned long long)-1 || length > 0x7fffffffULL) {
+        return false;
+    }
+
+    if (length == 0) {
+        return true;
+    }
+
+    if (!out.reserve((int)length)) {
+        return false;
+    }
+
+    byte* buffer = new byte[(int)length];
+    if (buffer == nullptr) {
+        return false;
+    }
+
+    const unsigned long long read_len = cleonos_sys_fs_read(path, (char*)buffer, length);
+    if (read_len != length) {
+        delete[] buffer;
+        return false;
+    }
+
+    for (unsigned long long index = 0; index < length; ++index) {
+        if (!out.push_back(buffer[index])) {
+            delete[] buffer;
+            out.clear();
+            return false;
+        }
+    }
+
+    delete[] buffer;
+    return true;
+#elif defined(XJ380)
     XFILE* file = xapi_OpenFile((char*)path);
     if (file == nullptr) {
         return false;
@@ -219,7 +264,10 @@ bool write_bytes(const char* path, const byte* data, int size)
         return false;
     }
 
-#ifdef XJ380
+#ifdef STARDUSTUI_CLEONOS
+    const unsigned long long written = cleonos_sys_fs_write(path, (const char*)data, (unsigned long long)size);
+    return written == (unsigned long long)size;
+#elif defined(XJ380)
     xapi_DeleteFile((char*)path);
     xapi_CreateFile((char*)path);
 
@@ -304,7 +352,10 @@ bool append_text(const char* path, const char* text)
         return true;
     }
 
-#ifdef XJ380
+#ifdef STARDUSTUI_CLEONOS
+    const unsigned long long written = cleonos_sys_fs_append(path, text, (unsigned long long)length);
+    return written == (unsigned long long)length;
+#elif defined(XJ380)
     XFILE* file = xapi_OpenFile((char*)path);
     unsigned long long offset = 0;
     if (file != nullptr) {

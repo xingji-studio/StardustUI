@@ -80,6 +80,44 @@ void set_last_error(const char *message) {
     g_last_error[index] = '\0';
 }
 
+void append_last_error(const char *message) {
+    if (message == nullptr) {
+        return;
+    }
+
+    unsigned long pos = 0;
+    while (g_last_error[pos] != '\0' && pos + 1 < sizeof(g_last_error)) {
+        ++pos;
+    }
+
+    unsigned long index = 0;
+    while (message[index] != '\0' && pos + 1 < sizeof(g_last_error)) {
+        g_last_error[pos++] = message[index++];
+    }
+    g_last_error[pos] = '\0';
+}
+
+void append_u64_dec(unsigned long long value) {
+    char buffer[32];
+    int pos = 0;
+
+    if (value == 0ULL) {
+        append_last_error("0");
+        return;
+    }
+
+    while (value != 0ULL && pos < static_cast<int>(sizeof(buffer))) {
+        buffer[pos++] = static_cast<char>('0' + (value % 10ULL));
+        value /= 10ULL;
+    }
+    while (pos > 0) {
+        char ch[2];
+        ch[0] = buffer[--pos];
+        ch[1] = '\0';
+        append_last_error(ch);
+    }
+}
+
 WindowState *to_state(unsigned long long handle) {
     return reinterpret_cast<WindowState*>(handle);
 }
@@ -425,25 +463,32 @@ void dispatch_event(WindowState *state, const cleonos_wm_event& event) {
             return;
         }
         if (state->message_proc != nullptr && local_y >= kChromeTitleHeight) {
-            state->message_proc(kWindowMessageButton, buttons, changed);
+            const unsigned long long client_x = static_cast<unsigned long long>(local_x);
+            const unsigned long long client_y = static_cast<unsigned long long>(local_y - kChromeTitleHeight);
+            if (left_changed) {
+                state->message_proc(left_down ? kWindowMessageLeftButtonDown : kWindowMessageLeftButtonUp,
+                                    client_x,
+                                    client_y);
+            }
         }
     } else if (event.type == CLEONOS_WM_EVENT_KEY) {
         if (state->message_proc != nullptr) {
-            state->message_proc(kWindowMessageKey, event.arg0, 0ULL);
+            const unsigned char ch = static_cast<unsigned char>(event.arg0 & 0xFFULL);
+            if (ch == '\b' || ch == 127U) {
+                state->message_proc(kWindowMessageSpecialChar, 0ULL, static_cast<unsigned long long>('\b'));
+            } else if (ch == '\r' || ch == '\n') {
+                state->message_proc(kWindowMessageSpecialChar, 0ULL, static_cast<unsigned long long>('\n'));
+            } else if (ch >= 32U) {
+                state->message_proc(kWindowMessageChar, 0ULL, static_cast<unsigned long long>(ch));
+            }
         }
     } else if (event.type == CLEONOS_WM_EVENT_FOCUS_LOST) {
         state->focused = false;
         state->dragging = false;
         present_state(state);
-        if (state->message_proc != nullptr) {
-            state->message_proc(kWindowMessageFocus, 0ULL, 0ULL);
-        }
     } else if (event.type == CLEONOS_WM_EVENT_FOCUS_GAINED) {
         state->focused = true;
         present_state(state);
-        if (state->message_proc != nullptr) {
-            state->message_proc(kWindowMessageFocus, 1ULL, 0ULL);
-        }
     }
 }
 }
@@ -497,9 +542,19 @@ bool create_window(char *title, int width, int height, unsigned long long *handl
 
     const unsigned long long window_id = cleonos_sys_wm_create(&req);
     if (window_id == 0ULL) {
+        const int fail_screen_width = state->screen_width;
+        const int fail_screen_height = state->screen_height;
         free(state->pixels);
         delete state;
         set_last_error("cleonos wm_create failed");
+        append_last_error(" req=");
+        append_u64_dec(req.width);
+        append_last_error("x");
+        append_u64_dec(req.height);
+        append_last_error(" screen=");
+        append_u64_dec(static_cast<unsigned long long>(fail_screen_width));
+        append_last_error("x");
+        append_u64_dec(static_cast<unsigned long long>(fail_screen_height));
         return false;
     }
 
