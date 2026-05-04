@@ -134,7 +134,12 @@ static int helloworld_main_impl(int, char**, char**) {
     return 0;
 }
 
-#if defined(STARDUSTUI_WINDOWS) || defined(STARDUSTUI_LINUX)
+#if defined(STARDUSTUI_CLEONOS)
+extern "C" int stardust_helloworld_entry(int argc, char *argv[], char *envp[])
+{
+    return helloworld_main_impl(argc, argv, envp);
+}
+#elif defined(STARDUSTUI_WINDOWS) || defined(STARDUSTUI_LINUX)
 int main(int argc, char *argv[], char *envp[])
 {
     return helloworld_main_impl(argc, argv, envp);

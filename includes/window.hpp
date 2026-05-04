@@ -9,6 +9,9 @@
 #ifdef STARDUSTUI_LINUX
 #include "../platforms/linux.hpp"
 #endif
+#ifdef STARDUSTUI_CLEONOS
+#include "../platforms/cleonos.hpp"
+#endif
 #include "components/base.hpp"
 #include "string.hpp"
 #include "vector.hpp"
