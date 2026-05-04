@@ -33,6 +33,7 @@ void FlexLayout::draw(unsigned long long handle) {
 }
 
 void FlexLayout::update() {
+    base_component::update();
     for (int index = 0; index < this->items.size(); ++index) {
         base_component* component = this->items[index].component;
         if (component == nullptr) {
@@ -62,6 +63,60 @@ void FlexLayout::set_bounds(int x, int y, int width, int height) {
     base_component::set_bounds(x, y, width, height);
     this->layout_dirty = true;
     this->request_redraw();
+}
+
+bool FlexLayout::handle_pointer_move(int x, int y) {
+    this->perform_layout();
+
+    bool changed = base_component::handle_pointer_move(x, y);
+    for (int index = 0; index < this->items.size(); ++index) {
+        base_component* component = this->items[index].component;
+        if (component == nullptr) {
+            continue;
+        }
+
+        if (component->handle_pointer_move(x, y)) {
+            changed = true;
+        }
+    }
+
+    return changed;
+}
+
+bool FlexLayout::handle_left_button(bool pressed, int x, int y) {
+    this->perform_layout();
+
+    bool changed = base_component::handle_left_button(pressed, x, y);
+    for (int index = 0; index < this->items.size(); ++index) {
+        base_component* component = this->items[index].component;
+        if (component == nullptr) {
+            continue;
+        }
+
+        if (component->handle_left_button(pressed, x, y)) {
+            changed = true;
+        }
+    }
+
+    return changed;
+}
+
+bool FlexLayout::handle_char_input(char ch, bool special) {
+    this->perform_layout();
+
+    bool changed = false;
+    for (int index = 0; index < this->items.size(); ++index) {
+        base_component* component = this->items[index].component;
+        if (component == nullptr) {
+            continue;
+        }
+
+        if (component->handle_char_input(ch, special)) {
+            changed = true;
+        }
+    }
+
+    return changed;
 }
 
 void FlexLayout::set_direction(Direction direction) {

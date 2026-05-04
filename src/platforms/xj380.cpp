@@ -11,6 +11,33 @@ namespace {
 char kDebugLogPath[] = "/system/stardustui.log";
 char kDebugLogBuffer[4096];
 unsigned long long kDebugLogLength = 0;
+window_message_proc g_window_message_proc = nullptr;
+
+void dispatch_xj380_message(unsigned long long type, unsigned long long h_data, unsigned long long l_data)
+{
+    if (g_window_message_proc == nullptr) {
+        return;
+    }
+
+    if (type == MSG_MOVE) {
+        g_window_message_proc(kWindowMessageMove, h_data, l_data);
+        return;
+    }
+
+    if (type == MSG_LBUTTON) {
+        g_window_message_proc(kWindowMessageLeftButtonClick, h_data, l_data);
+        return;
+    }
+
+    if (type == MSG_CHAR) {
+        g_window_message_proc(kWindowMessageChar, 0, l_data);
+        return;
+    }
+
+    if (type == MSG_SPCHAR) {
+        g_window_message_proc(kWindowMessageSpecialChar, 0, l_data);
+    }
+}
 }
 
 void *operator new(operator_size_t size)
@@ -96,7 +123,8 @@ void refresh_window(unsigned long long handle)
 
 void set_window_message_processor(unsigned long long handle, window_message_proc proc)
 {
-    SetMsgPrcor(handle, proc);
+    g_window_message_proc = proc;
+    SetMsgPrcor(handle, dispatch_xj380_message);
 }
 
 void wait_window()

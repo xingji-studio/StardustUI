@@ -52,9 +52,15 @@ struct WindowState {
 };
 
 stardustui::vector<WindowState*> g_windows;
+WindowState g_measurement_state;
 char g_last_error[256];
 bool g_sdl_ready = false;
 bool g_ttf_ready = false;
+
+int max_int(int a, int b)
+{
+    return a > b ? a : b;
+}
 
 void set_last_error(const char *message)
 {
@@ -144,6 +150,8 @@ bool ensure_sdl()
         }
         g_ttf_ready = true;
     }
+
+    SDL_StartTextInput();
 
     return true;
 }
@@ -252,6 +260,11 @@ FontEntry *load_font(WindowState *state, unsigned int size)
     return &state->fonts[state->fonts.size() - 1];
 }
 
+FontEntry *load_measurement_font(unsigned int size)
+{
+    return load_font(&g_measurement_state, size);
+}
+
 void draw_command(WindowState *state, const DrawCommand& command)
 {
     if (state == nullptr || state->renderer == nullptr) {
@@ -328,6 +341,36 @@ void dispatch_mouse_move(WindowState *state, const SDL_MouseMotionEvent& motion)
                         static_cast<unsigned long long>(motion.x),
                         static_cast<unsigned long long>(motion.y));
 }
+
+void dispatch_mouse_button(WindowState *state, bool pressed, const SDL_MouseButtonEvent& button)
+{
+    if (state == nullptr || state->message_proc == nullptr || button.button != SDL_BUTTON_LEFT) {
+        return;
+    }
+
+    state->message_proc(pressed ? kWindowMessageLeftButtonDown : kWindowMessageLeftButtonUp,
+                        static_cast<unsigned long long>(button.x),
+                        static_cast<unsigned long long>(button.y));
+}
+
+void apply_window_outer_size(WindowState *state, int outer_width, int outer_height)
+{
+    if (state == nullptr || state->window == nullptr) {
+        return;
+    }
+
+    int top = 0;
+    int left = 0;
+    int bottom = 0;
+    int right = 0;
+    if (SDL_GetWindowBordersSize(state->window, &top, &left, &bottom, &right) != 0) {
+        return;
+    }
+
+    const int client_width = max_int(1, outer_width - left - right);
+    const int client_height = max_int(1, outer_height - top - bottom);
+    SDL_SetWindowSize(state->window, client_width, client_height);
+}
 }
 
 bool create_window(char *title, int width, int height, unsigned long long *handle)
@@ -359,6 +402,7 @@ bool create_window(char *title, int width, int height, unsigned long long *handl
         return false;
     }
 
+    apply_window_outer_size(state, width, height);
     state->renderer = SDL_CreateRenderer(state->window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
     if (state->renderer == nullptr) {
         state->renderer = SDL_CreateRenderer(state->window, -1, SDL_RENDERER_SOFTWARE);
@@ -435,6 +479,12 @@ void pump_window_events()
         Uint32 window_id = 0;
         if (event.type == SDL_MOUSEMOTION) {
             window_id = event.motion.windowID;
+        } else if (event.type == SDL_MOUSEBUTTONDOWN || event.type == SDL_MOUSEBUTTONUP) {
+            window_id = event.button.windowID;
+        } else if (event.type == SDL_TEXTINPUT) {
+            window_id = event.text.windowID;
+        } else if (event.type == SDL_KEYDOWN) {
+            window_id = event.key.windowID;
         } else if (event.type == SDL_WINDOWEVENT) {
             window_id = event.window.windowID;
         }
@@ -446,6 +496,21 @@ void pump_window_events()
 
         if (event.type == SDL_MOUSEMOTION) {
             dispatch_mouse_move(state, event.motion);
+        } else if (event.type == SDL_MOUSEBUTTONDOWN) {
+            dispatch_mouse_button(state, true, event.button);
+        } else if (event.type == SDL_MOUSEBUTTONUP) {
+            dispatch_mouse_button(state, false, event.button);
+        } else if (event.type == SDL_TEXTINPUT && state->message_proc != nullptr) {
+            const char* text = event.text.text;
+            for (int index = 0; text[index] != '\0'; ++index) {
+                state->message_proc(kWindowMessageChar, 0, static_cast<unsigned long long>(static_cast<unsigned char>(text[index])));
+            }
+        } else if (event.type == SDL_KEYDOWN && state->message_proc != nullptr) {
+            if (event.key.keysym.sym == SDLK_BACKSPACE) {
+                state->message_proc(kWindowMessageSpecialChar, 0, static_cast<unsigned long long>('\b'));
+            } else if (event.key.keysym.sym == SDLK_RETURN || event.key.keysym.sym == SDLK_KP_ENTER) {
+                state->message_proc(kWindowMessageSpecialChar, 0, static_cast<unsigned long long>('\n'));
+            }
         } else if (event.type == SDL_WINDOWEVENT && event.window.event == SDL_WINDOWEVENT_EXPOSED) {
             redraw(state);
         } else if (event.type == SDL_WINDOWEVENT && event.window.event == SDL_WINDOWEVENT_CLOSE) {
@@ -493,6 +558,14 @@ bool delete_window(unsigned long long handle)
     }
 
     if (!any_window) {
+        for (int index = 0; index < g_measurement_state.fonts.size(); ++index) {
+            if (g_measurement_state.fonts[index].font != nullptr) {
+                TTF_CloseFont(g_measurement_state.fonts[index].font);
+                g_measurement_state.fonts[index].font = nullptr;
+            }
+        }
+        g_measurement_state.fonts.clear();
+        SDL_StopTextInput();
         if (g_ttf_ready) {
             TTF_Quit();
             g_ttf_ready = false;
@@ -569,16 +642,15 @@ unsigned int calc_text_width(const stardustui::string& text, unsigned int size)
         return static_cast<unsigned int>(text.length() * (size == 0 ? 12 : size));
     }
 
-    TTF_Font *font = open_font(size == 0 ? 12 : size);
-    if (font == nullptr) {
+    FontEntry *font_entry = load_measurement_font(size == 0 ? 12 : size);
+    if (font_entry == nullptr || font_entry->font == nullptr) {
         log_serial("stardustui: SDL_ttf failed to load font for calc_text_width\n");
         return static_cast<unsigned int>(text.length() * (size == 0 ? 12 : size));
     }
 
     int width = 0;
     int height = 0;
-    TTF_SizeUTF8(font, text.c_str(), &width, &height);
-    TTF_CloseFont(font);
+    TTF_SizeUTF8(font_entry->font, text.c_str(), &width, &height);
     return static_cast<unsigned int>(width);
 }
 

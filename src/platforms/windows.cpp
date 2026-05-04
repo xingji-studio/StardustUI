@@ -286,6 +286,40 @@ LRESULT CALLBACK window_proc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lpar
         }
         return 0;
     }
+    case WM_LBUTTONDOWN: {
+        WindowState *state = find_state(hwnd);
+        if (state != nullptr && state->message_proc != nullptr) {
+            SetCapture(hwnd);
+            state->message_proc(
+                kWindowMessageLeftButtonDown,
+                static_cast<unsigned long long>(GET_X_LPARAM(lparam)),
+                static_cast<unsigned long long>(GET_Y_LPARAM(lparam)));
+        }
+        return 0;
+    }
+    case WM_LBUTTONUP: {
+        WindowState *state = find_state(hwnd);
+        if (state != nullptr && state->message_proc != nullptr) {
+            ReleaseCapture();
+            state->message_proc(
+                kWindowMessageLeftButtonUp,
+                static_cast<unsigned long long>(GET_X_LPARAM(lparam)),
+                static_cast<unsigned long long>(GET_Y_LPARAM(lparam)));
+        }
+        return 0;
+    }
+    case WM_CHAR: {
+        WindowState *state = find_state(hwnd);
+        if (state != nullptr && state->message_proc != nullptr) {
+            const char ch = static_cast<char>(wparam & 0xFF);
+            if (ch == '\b' || ch == '\r' || ch == '\n') {
+                state->message_proc(kWindowMessageSpecialChar, 0, static_cast<unsigned long long>(ch == '\r' ? '\n' : ch));
+            } else {
+                state->message_proc(kWindowMessageChar, 0, static_cast<unsigned long long>(ch));
+            }
+        }
+        return 0;
+    }
     case WM_DESTROY:
         remove_state(hwnd);
         PostQuitMessage(0);

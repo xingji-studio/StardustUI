@@ -7,10 +7,14 @@ OBJ_DIR := $(BUILD_DIR)/obj
 TARGET := $(BUILD_DIR)/libStardustUI.a 
 
 SRC_FILES := \
+	src/file.cpp \
 	src/window.cpp \
 	src/components/base.cpp \
 	src/components/lable.cpp \
+	src/components/button.cpp \
 	src/components/canvas.cpp \
+	src/components/scrollbar.cpp \
+	src/components/textbox.cpp \
 	src/components/flex.cpp
 
 ifeq ($(PLATFORM),windows)

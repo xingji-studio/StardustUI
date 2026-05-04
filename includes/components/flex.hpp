@@ -33,6 +33,9 @@ public:
     int get_preferred_width() const override;
     int get_preferred_height() const override;
     void set_bounds(int x, int y, int width, int height) override;
+    bool handle_pointer_move(int x, int y) override;
+    bool handle_left_button(bool pressed, int x, int y) override;
+    bool handle_char_input(char ch, bool special) override;
 
     void set_direction(Direction direction);
     void set_align_items(Align align);

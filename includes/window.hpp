@@ -38,5 +38,6 @@ private:
 	int height;
 	unsigned long long handle;
 	bool needs_redraw;
+	bool background_needs_clear;
 	stardustui::vector<base_component*> components; 
 };

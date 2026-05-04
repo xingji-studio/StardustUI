@@ -13,29 +13,41 @@ ROOT_DIR := ../../../..
 
 SRC_FILES := \
 	layout.cpp \
+	$(FRAMEWORK_DIR)/src/file.cpp \
 	$(FRAMEWORK_DIR)/src/window.cpp \
 	$(FRAMEWORK_DIR)/src/components/base.cpp \
 	$(FRAMEWORK_DIR)/src/components/lable.cpp \
+	$(FRAMEWORK_DIR)/src/components/button.cpp \
 	$(FRAMEWORK_DIR)/src/components/canvas.cpp \
+	$(FRAMEWORK_DIR)/src/components/scrollbar.cpp \
+	$(FRAMEWORK_DIR)/src/components/textbox.cpp \
 	$(FRAMEWORK_DIR)/src/components/flex.cpp
 
 OBJ_FILES := \
 	$(OBJ_DIR)/layout.o \
+	$(OBJ_DIR)/framework/file.o \
 	$(OBJ_DIR)/framework/window.o \
 	$(OBJ_DIR)/framework/components/base.o \
 	$(OBJ_DIR)/framework/components/lable.o \
+	$(OBJ_DIR)/framework/components/button.o \
 	$(OBJ_DIR)/framework/components/canvas.o \
+	$(OBJ_DIR)/framework/components/scrollbar.o \
+	$(OBJ_DIR)/framework/components/textbox.o \
 	$(OBJ_DIR)/framework/components/flex.o
 
 FRAMEWORK_HEADERS := \
 	$(FRAMEWORK_DIR)/settings.hpp \
 	$(FRAMEWORK_DIR)/includes/string.hpp \
 	$(FRAMEWORK_DIR)/includes/vector.hpp \
+	$(FRAMEWORK_DIR)/includes/file.hpp \
 	$(FRAMEWORK_DIR)/includes/window.hpp \
 	$(FRAMEWORK_DIR)/includes/sytle.hpp \
 	$(FRAMEWORK_DIR)/includes/components/base.hpp \
 	$(FRAMEWORK_DIR)/includes/components/lable.hpp \
+	$(FRAMEWORK_DIR)/includes/components/button.hpp \
 	$(FRAMEWORK_DIR)/includes/components/canvas.hpp \
+	$(FRAMEWORK_DIR)/includes/components/scrollbar.hpp \
+	$(FRAMEWORK_DIR)/includes/components/textbox.hpp \
 	$(FRAMEWORK_DIR)/includes/components/flex.hpp \
 	$(FRAMEWORK_DIR)/platforms/linux.hpp \
 	$(FRAMEWORK_DIR)/platforms/windows.hpp \
@@ -124,6 +136,11 @@ $(OBJ_DIR)/framework/window.o: $(FRAMEWORK_DIR)/src/window.cpp $(FRAMEWORK_HEADE
 	@$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c $< -o $@
 	@echo "CPP $< -> $@"
 
+$(OBJ_DIR)/framework/file.o: $(FRAMEWORK_DIR)/src/file.cpp $(FRAMEWORK_HEADERS)
+	@$(call make-dir,$(dir $@))
+	@$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c $< -o $@
+	@echo "CPP $< -> $@"
+
 $(OBJ_DIR)/framework/platforms/windows.o: $(FRAMEWORK_DIR)/src/platforms/windows.cpp $(FRAMEWORK_HEADERS)
 	@$(call make-dir,$(dir $@))
 	@$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c $< -o $@
@@ -149,7 +166,22 @@ $(OBJ_DIR)/framework/components/lable.o: $(FRAMEWORK_DIR)/src/components/lable.c
 	@$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c $< -o $@
 	@echo "CPP $< -> $@"
 
+$(OBJ_DIR)/framework/components/button.o: $(FRAMEWORK_DIR)/src/components/button.cpp $(FRAMEWORK_HEADERS)
+	@$(call make-dir,$(dir $@))
+	@$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c $< -o $@
+	@echo "CPP $< -> $@"
+
 $(OBJ_DIR)/framework/components/canvas.o: $(FRAMEWORK_DIR)/src/components/canvas.cpp $(FRAMEWORK_HEADERS)
+	@$(call make-dir,$(dir $@))
+	@$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c $< -o $@
+	@echo "CPP $< -> $@"
+
+$(OBJ_DIR)/framework/components/scrollbar.o: $(FRAMEWORK_DIR)/src/components/scrollbar.cpp $(FRAMEWORK_HEADERS)
+	@$(call make-dir,$(dir $@))
+	@$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c $< -o $@
+	@echo "CPP $< -> $@"
+
+$(OBJ_DIR)/framework/components/textbox.o: $(FRAMEWORK_DIR)/src/components/textbox.cpp $(FRAMEWORK_HEADERS)
 	@$(call make-dir,$(dir $@))
 	@$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c $< -o $@
 	@echo "CPP $< -> $@"

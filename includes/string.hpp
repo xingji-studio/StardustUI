@@ -27,7 +27,7 @@ public:
             ++index;
         }
 
-        ensure_terminator();
+        vector<char>::push_back('\0');
     }
 
     bool append(const char* text) {
@@ -96,7 +96,13 @@ public:
 
 private:
     void ensure_terminator() {
-        if (vector<char>::size() == 0) {
+        int current_size = vector<char>::size();
+        if (current_size == 0) {
+            vector<char>::push_back('\0');
+            return;
+        }
+
+        if (vector<char>::operator[](current_size - 1) != '\0') {
             vector<char>::push_back('\0');
         }
     }

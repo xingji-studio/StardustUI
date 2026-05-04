@@ -16,6 +16,7 @@ Window::Window(const char* title, int width, int height) {
 	this->height = height;
 	this->handle = 0;
 	this->needs_redraw = true;
+	this->background_needs_clear = true;
 }
 
 Window::~Window() {
@@ -40,6 +41,7 @@ void Window::show() {
 
 	append_debug_log("stardustui: create_window ok\n");
 	g_active_window = this;
+	this->background_needs_clear = true;
 	set_window_message_processor(this->handle, dispatch_window_message);
 	draw_components();
 	refresh_window(this->handle);
@@ -90,10 +92,6 @@ void Window::error(const char* msg) {
 }
 
 void Window::handle_message(unsigned long long type, unsigned long long h_data, unsigned long long l_data) {
-	if (type != kWindowMessageMove) {
-		return;
-	}
-
 	bool changed = false;
 	for (int i = 0; i < this->components.size(); ++i) {
 		base_component* component = this->components[i];
@@ -101,11 +99,33 @@ void Window::handle_message(unsigned long long type, unsigned long long h_data, 
 			continue;
 		}
 
-		const bool hovered = component->contains(static_cast<int>(h_data), static_cast<int>(l_data));
-		if (component->is_hover_active() != hovered) {
-			component->set_hover_state(hovered);
-			component->set_mouse_state(hovered);
-			changed = true;
+		if (type == kWindowMessageMove) {
+			if (component->handle_pointer_move(static_cast<int>(h_data), static_cast<int>(l_data))) {
+				changed = true;
+			}
+		} else if (type == kWindowMessageLeftButtonDown) {
+			if (component->handle_left_button(true, static_cast<int>(h_data), static_cast<int>(l_data))) {
+				changed = true;
+			}
+		} else if (type == kWindowMessageLeftButtonUp) {
+			if (component->handle_left_button(false, static_cast<int>(h_data), static_cast<int>(l_data))) {
+				changed = true;
+			}
+		} else if (type == kWindowMessageLeftButtonClick) {
+			if (component->handle_left_button(true, static_cast<int>(h_data), static_cast<int>(l_data))) {
+				changed = true;
+			}
+			if (component->handle_left_button(false, static_cast<int>(h_data), static_cast<int>(l_data))) {
+				changed = true;
+			}
+		} else if (type == kWindowMessageChar) {
+			if (component->handle_char_input(static_cast<char>(l_data), false)) {
+				changed = true;
+			}
+		} else if (type == kWindowMessageSpecialChar) {
+			if (component->handle_char_input(static_cast<char>(l_data), true)) {
+				changed = true;
+			}
 		}
 	}
 
@@ -129,11 +149,19 @@ void Window::addComponent(base_component* component) {
 	}
 
 	this->needs_redraw = true;
+	this->background_needs_clear = true;
 }
 
 void Window::draw_components() {
 	clear_draw_commands(this->handle);
+#ifdef XJ380
+	if (this->background_needs_clear) {
+		draw_rect(this->handle, 0, 0, this->width, this->height, 0xFFFFFFFF);
+		this->background_needs_clear = false;
+	}
+#else
 	draw_rect(this->handle, 0, 0, this->width, this->height, 0xFFFFFFFF);
+#endif
 	for (int i = 0; i < this->components.size(); ++i) {
 		if (this->components[i] != nullptr) {
 			this->components[i]->draw(this->handle);
