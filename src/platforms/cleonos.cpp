@@ -13,21 +13,54 @@ namespace {
      ((unsigned long long)(r3) << 15U) | ((unsigned long long)(r4) << 10U) | ((unsigned long long)(r5) << 5U) | \
      (unsigned long long)(r6))
 
+constexpr int kChromeTitleHeight = 32;
+constexpr int kChromeControlWidth = 46;
+constexpr unsigned int kColorWhite = 0x00FFFFFFU;
+constexpr unsigned int kColorTitle = 0x000078D7U;
+constexpr unsigned int kColorTitleInactive = 0x00F3F3F3U;
+constexpr unsigned int kColorText = 0x00232323U;
+constexpr unsigned int kColorBorder = 0x00D0D0D0U;
+constexpr unsigned int kColorClose = 0x00E81123U;
+constexpr unsigned int kColorControlActive = 0x001A5EA0U;
+constexpr unsigned int kColorControlInactive = 0x00E5E5E5U;
+
 struct WindowState {
     unsigned long long window_id;
     int width;
     int height;
+    int client_width;
+    int client_height;
+    int x;
+    int y;
+    int screen_width;
+    int screen_height;
+    int drag_dx;
+    int drag_dy;
     unsigned int *pixels;
     window_message_proc message_proc;
     bool open;
+    bool focused;
+    bool dragging;
+    char title[96];
 
     WindowState()
         : window_id(0),
           width(0),
           height(0),
+          client_width(0),
+          client_height(0),
+          x(96),
+          y(72),
+          screen_width(1280),
+          screen_height(800),
+          drag_dx(0),
+          drag_dy(0),
           pixels(nullptr),
           message_proc(nullptr),
-          open(false) {}
+          open(false),
+          focused(false),
+          dragging(false),
+          title{} {}
 };
 
 stardustui::vector<WindowState*> g_windows;
@@ -77,7 +110,12 @@ unsigned int to_cleonos_color(unsigned int color) {
     return (color >> 8U) & 0x00FFFFFFU;
 }
 
+int u64_as_i32(unsigned long long raw) {
+    return static_cast<int>(static_cast<long long>(raw));
+}
+
 int clamp_int(int value, int min_value, int max_value) {
+    if (max_value < min_value) return min_value;
     if (value < min_value) return min_value;
     if (value > max_value) return max_value;
     return value;
@@ -161,14 +199,14 @@ unsigned long long glyph_mask(char ch) {
     }
 }
 
-void write_pixel(WindowState *state, int x, int y, unsigned int color) {
+void write_pixel_raw(WindowState *state, int x, int y, unsigned int color) {
     if (state == nullptr || state->pixels == nullptr || x < 0 || y < 0 || x >= state->width || y >= state->height) {
         return;
     }
-    state->pixels[(y * state->width) + x] = to_cleonos_color(color);
+    state->pixels[(y * state->width) + x] = color & 0x00FFFFFFU;
 }
 
-void fill_rect(WindowState *state, int x, int y, int width, int height, unsigned int color) {
+void fill_rect_raw(WindowState *state, int x, int y, int width, int height, unsigned int color) {
     if (state == nullptr || state->pixels == nullptr || width <= 0 || height <= 0) {
         return;
     }
@@ -181,13 +219,28 @@ void fill_rect(WindowState *state, int x, int y, int width, int height, unsigned
         return;
     }
 
-    const unsigned int out_color = to_cleonos_color(color);
+    const unsigned int out_color = color & 0x00FFFFFFU;
     for (int row = top; row < bottom; ++row) {
         unsigned int *dst = state->pixels + (row * state->width);
         for (int col = left; col < right; ++col) {
             dst[col] = out_color;
         }
     }
+}
+
+void stroke_rect_raw(WindowState *state, int x, int y, int width, int height, unsigned int color) {
+    fill_rect_raw(state, x, y, width, 1, color);
+    fill_rect_raw(state, x, y + height - 1, width, 1, color);
+    fill_rect_raw(state, x, y, 1, height, color);
+    fill_rect_raw(state, x + width - 1, y, 1, height, color);
+}
+
+void write_pixel(WindowState *state, int x, int y, unsigned int color) {
+    write_pixel_raw(state, x, y + kChromeTitleHeight, to_cleonos_color(color));
+}
+
+void fill_rect(WindowState *state, int x, int y, int width, int height, unsigned int color) {
+    fill_rect_raw(state, x, y + kChromeTitleHeight, width, height, to_cleonos_color(color));
 }
 
 int font_scale(unsigned int size) {
@@ -213,21 +266,184 @@ void draw_char(WindowState *state, int x, int y, char ch, int scale, unsigned in
     }
 }
 
+void draw_char_raw(WindowState *state, int x, int y, char ch, int scale, unsigned int color) {
+    const unsigned long long mask = glyph_mask(ch);
+    if (mask == 0ULL || scale <= 0) {
+        return;
+    }
+
+    for (int row = 0; row < 7; ++row) {
+        for (int col = 0; col < 5; ++col) {
+            const unsigned int bit = static_cast<unsigned int>((6 - row) * 5 + (4 - col));
+            if ((mask & (1ULL << bit)) != 0ULL) {
+                fill_rect_raw(state, x + (col * scale), y + (row * scale), scale, scale, color);
+            }
+        }
+    }
+}
+
+void draw_text_raw(WindowState *state, int x, int y, const char *text, int scale, unsigned int color, int max_x) {
+    if (state == nullptr || text == nullptr || scale <= 0) {
+        return;
+    }
+
+    int cursor_x = x;
+    for (unsigned long index = 0; text[index] != '\0'; ++index) {
+        if (max_x > 0 && cursor_x + (5 * scale) > max_x) {
+            break;
+        }
+        if (text[index] != ' ') {
+            draw_char_raw(state, cursor_x, y, text[index], scale, color);
+        }
+        cursor_x += 6 * scale;
+    }
+}
+
+void draw_control_button(WindowState *state, int x, int kind) {
+    const bool is_close = (kind == 2);
+    const unsigned int bg = is_close ? kColorClose : (state->focused ? kColorControlActive : kColorControlInactive);
+    const unsigned int fg = (is_close || state->focused) ? kColorWhite : kColorText;
+    const int cy = kChromeTitleHeight / 2;
+    const int cx = x + (kChromeControlWidth / 2);
+
+    fill_rect_raw(state, x, 0, kChromeControlWidth, kChromeTitleHeight, bg);
+    if (kind == 0) {
+        fill_rect_raw(state, cx - 6, cy + 4, 12, 1, fg);
+    } else if (kind == 1) {
+        stroke_rect_raw(state, cx - 6, cy - 6, 12, 12, fg);
+        fill_rect_raw(state, cx - 6, cy - 6, 12, 2, fg);
+    } else {
+        for (int i = 0; i < 11; ++i) {
+            fill_rect_raw(state, cx - 5 + i, cy - 5 + i, 1, 1, fg);
+            fill_rect_raw(state, cx + 5 - i, cy - 5 + i, 1, 1, fg);
+        }
+    }
+}
+
+void draw_chrome(WindowState *state) {
+    if (state == nullptr || state->pixels == nullptr) {
+        return;
+    }
+
+    const unsigned int title_bg = state->focused ? kColorTitle : kColorTitleInactive;
+    const unsigned int title_fg = state->focused ? kColorWhite : kColorText;
+    fill_rect_raw(state, 0, 0, state->width, kChromeTitleHeight, title_bg);
+    fill_rect_raw(state, 0, kChromeTitleHeight, state->width, 1, kColorBorder);
+    stroke_rect_raw(state, 0, 0, state->width, state->height, kColorBorder);
+
+    const int title_max_x = state->width - (kChromeControlWidth * 3) - 8;
+    draw_text_raw(state, 14, 12, state->title, 1, title_fg, title_max_x);
+    draw_control_button(state, state->width - (kChromeControlWidth * 3), 0);
+    draw_control_button(state, state->width - (kChromeControlWidth * 2), 1);
+    draw_control_button(state, state->width - kChromeControlWidth, 2);
+}
+
+void destroy_state(WindowState *state) {
+    if (state == nullptr) {
+        return;
+    }
+    remove_state(state);
+    if (state->window_id != 0ULL) {
+        (void)cleonos_sys_wm_destroy(state->window_id);
+        state->window_id = 0ULL;
+    }
+    free(state->pixels);
+    state->pixels = nullptr;
+    delete state;
+}
+
+void move_window(WindowState *state, int target_x, int target_y) {
+    if (state == nullptr || state->window_id == 0ULL) {
+        return;
+    }
+
+    state->x = clamp_int(target_x, 0, state->screen_width - state->width);
+    state->y = clamp_int(target_y, 24, state->screen_height - 40);
+
+    cleonos_wm_move_req req;
+    req.window_id = state->window_id;
+    req.x = static_cast<unsigned long long>(static_cast<long long>(state->x));
+    req.y = static_cast<unsigned long long>(static_cast<long long>(state->y));
+    (void)cleonos_sys_wm_move(&req);
+}
+
+void present_state(WindowState *state) {
+    if (state == nullptr || state->pixels == nullptr || state->window_id == 0ULL) {
+        return;
+    }
+
+    draw_chrome(state);
+    cleonos_wm_present_req req;
+    req.window_id = state->window_id;
+    req.pixels_ptr = reinterpret_cast<unsigned long long>(state->pixels);
+    req.src_width = static_cast<unsigned long long>(state->width);
+    req.src_height = static_cast<unsigned long long>(state->height);
+    req.src_pitch_bytes = static_cast<unsigned long long>(state->width * 4);
+    if (cleonos_sys_wm_present(&req) == 0ULL) {
+        state->open = false;
+    }
+}
+
 void dispatch_event(WindowState *state, const cleonos_wm_event& event) {
-    if (state == nullptr || state->message_proc == nullptr) {
+    if (state == nullptr) {
         return;
     }
 
     if (event.type == CLEONOS_WM_EVENT_MOUSE_MOVE) {
-        state->message_proc(kWindowMessageMove, event.arg2, event.arg3);
+        const int local_x = u64_as_i32(event.arg2);
+        const int local_y = u64_as_i32(event.arg3);
+        if (state->dragging) {
+            move_window(state, u64_as_i32(event.arg0) - state->drag_dx, u64_as_i32(event.arg1) - state->drag_dy);
+            return;
+        }
+        if (state->message_proc != nullptr && local_y >= kChromeTitleHeight) {
+            state->message_proc(kWindowMessageMove,
+                                static_cast<unsigned long long>(local_x),
+                                static_cast<unsigned long long>(local_y - kChromeTitleHeight));
+        }
     } else if (event.type == CLEONOS_WM_EVENT_MOUSE_BUTTON) {
-        state->message_proc(kWindowMessageButton, event.arg0, event.arg1);
+        const unsigned long long buttons = event.arg0;
+        const unsigned long long changed = event.arg1;
+        const int local_x = u64_as_i32(event.arg2);
+        const int local_y = u64_as_i32(event.arg3);
+        const bool left_changed = (changed & 0x1ULL) != 0ULL;
+        const bool left_down = (buttons & 0x1ULL) != 0ULL;
+
+        if (left_changed && !left_down) {
+            state->dragging = false;
+        }
+        if (left_changed && left_down && local_y >= 0 && local_y < kChromeTitleHeight) {
+            if (local_x >= state->width - kChromeControlWidth) {
+                state->open = false;
+                return;
+            }
+            if (local_x < state->width - (kChromeControlWidth * 3)) {
+                state->dragging = true;
+                state->drag_dx = local_x;
+                state->drag_dy = local_y;
+            }
+            return;
+        }
+        if (state->message_proc != nullptr && local_y >= kChromeTitleHeight) {
+            state->message_proc(kWindowMessageButton, buttons, changed);
+        }
     } else if (event.type == CLEONOS_WM_EVENT_KEY) {
-        state->message_proc(kWindowMessageKey, event.arg0, 0ULL);
+        if (state->message_proc != nullptr) {
+            state->message_proc(kWindowMessageKey, event.arg0, 0ULL);
+        }
     } else if (event.type == CLEONOS_WM_EVENT_FOCUS_LOST) {
-        state->message_proc(kWindowMessageFocus, 0ULL, 0ULL);
+        state->focused = false;
+        state->dragging = false;
+        present_state(state);
+        if (state->message_proc != nullptr) {
+            state->message_proc(kWindowMessageFocus, 0ULL, 0ULL);
+        }
     } else if (event.type == CLEONOS_WM_EVENT_FOCUS_GAINED) {
-        state->message_proc(kWindowMessageFocus, 1ULL, 0ULL);
+        state->focused = true;
+        present_state(state);
+        if (state->message_proc != nullptr) {
+            state->message_proc(kWindowMessageFocus, 1ULL, 0ULL);
+        }
     }
 }
 }
@@ -244,7 +460,27 @@ bool create_window(char *title, int width, int height, unsigned long long *handl
         return false;
     }
 
-    state->pixels = static_cast<unsigned int *>(calloc(static_cast<unsigned long>(width) * static_cast<unsigned long>(height),
+    cleonos_fb_info fb_info;
+    memset(&fb_info, 0, sizeof(fb_info));
+    if (cleonos_sys_fb_info(&fb_info) != 0ULL && fb_info.width > 0ULL && fb_info.height > 0ULL &&
+        fb_info.width <= 4096ULL && fb_info.height <= 4096ULL) {
+        state->screen_width = static_cast<int>(fb_info.width);
+        state->screen_height = static_cast<int>(fb_info.height);
+    }
+
+    state->client_width = width;
+    state->client_height = height;
+    state->width = width;
+    state->height = height + kChromeTitleHeight;
+    state->x = (state->screen_width > state->width) ? ((state->screen_width - state->width) / 2) : 0;
+    state->y = (state->screen_height > state->height) ? ((state->screen_height - state->height) / 2) : 24;
+    state->focused = true;
+    for (int index = 0; title[index] != '\0' && index + 1 < static_cast<int>(sizeof(state->title)); ++index) {
+        state->title[index] = title[index];
+        state->title[index + 1] = '\0';
+    }
+
+    state->pixels = static_cast<unsigned int *>(calloc(static_cast<unsigned long>(state->width) * static_cast<unsigned long>(state->height),
                                                        sizeof(unsigned int)));
     if (state->pixels == nullptr) {
         delete state;
@@ -253,10 +489,10 @@ bool create_window(char *title, int width, int height, unsigned long long *handl
     }
 
     cleonos_wm_create_req req;
-    req.x = 96ULL;
-    req.y = 72ULL;
-    req.width = static_cast<unsigned long long>(width);
-    req.height = static_cast<unsigned long long>(height);
+    req.x = static_cast<unsigned long long>(static_cast<long long>(state->x));
+    req.y = static_cast<unsigned long long>(static_cast<long long>(state->y));
+    req.width = static_cast<unsigned long long>(state->width);
+    req.height = static_cast<unsigned long long>(state->height);
     req.flags = 0ULL;
 
     const unsigned long long window_id = cleonos_sys_wm_create(&req);
@@ -268,9 +504,8 @@ bool create_window(char *title, int width, int height, unsigned long long *handl
     }
 
     state->window_id = window_id;
-    state->width = width;
-    state->height = height;
     state->open = true;
+    (void)cleonos_sys_wm_set_focus(window_id);
     *handle = from_state(state);
     if (!g_windows.push_back(state)) {
         (void)cleonos_sys_wm_destroy(window_id);
@@ -280,7 +515,6 @@ bool create_window(char *title, int width, int height, unsigned long long *handl
         return false;
     }
 
-    (void)title;
     set_last_error(nullptr);
     return true;
 }
@@ -313,15 +547,7 @@ void refresh_window(unsigned long long handle) {
         return;
     }
 
-    cleonos_wm_present_req req;
-    req.window_id = state->window_id;
-    req.pixels_ptr = reinterpret_cast<unsigned long long>(state->pixels);
-    req.src_width = static_cast<unsigned long long>(state->width);
-    req.src_height = static_cast<unsigned long long>(state->height);
-    req.src_pitch_bytes = static_cast<unsigned long long>(state->width * 4);
-    if (cleonos_sys_wm_present(&req) == 0ULL) {
-        state->open = false;
-    }
+    present_state(state);
 }
 
 void wait_window() {
@@ -374,12 +600,7 @@ bool delete_window(unsigned long long handle) {
         return false;
     }
 
-    remove_state(state);
-    if (state->window_id != 0ULL) {
-        (void)cleonos_sys_wm_destroy(state->window_id);
-    }
-    free(state->pixels);
-    delete state;
+    destroy_state(state);
     return true;
 }
 
