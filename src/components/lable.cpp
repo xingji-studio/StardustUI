@@ -9,6 +9,9 @@
 #ifdef STARDUSTUI_LINUX
 #include "../../platforms/linux.hpp"
 #endif
+#ifdef STARDUSTUI_CLEONOS
+#include "../../platforms/cleonos.hpp"
+#endif
 Lable::Lable(const stardustui::string& text, unsigned int size, unsigned int color)
     : text(text), size(size), color(color) {}
 
