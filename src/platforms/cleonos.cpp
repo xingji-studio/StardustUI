@@ -505,12 +505,13 @@ bool create_window(char *title, int width, int height, unsigned long long *handl
         return false;
     }
 
-    cleonos_fb_info fb_info;
-    memset(&fb_info, 0, sizeof(fb_info));
-    if (cleonos_sys_fb_info(&fb_info) != 0ULL && fb_info.width > 0ULL && fb_info.height > 0ULL &&
-        fb_info.width <= 4096ULL && fb_info.height <= 4096ULL) {
-        state->screen_width = static_cast<int>(fb_info.width);
-        state->screen_height = static_cast<int>(fb_info.height);
+    cleonos_display_info display_info;
+    memset(&display_info, 0, sizeof(display_info));
+    if (cleonos_sys_display_info(CLEONOS_DISPLAY_TARGET_WM, &display_info) != 0ULL &&
+        display_info.logical_width > 0ULL && display_info.logical_height > 0ULL &&
+        display_info.logical_width <= 4096ULL && display_info.logical_height <= 4096ULL) {
+        state->screen_width = static_cast<int>(display_info.logical_width);
+        state->screen_height = static_cast<int>(display_info.logical_height);
     }
 
     state->client_width = width;
