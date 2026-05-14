@@ -3,7 +3,7 @@
 #include "./stdint.h"
 #include "./xposix/stdarg.h"
 
-#ifndef __cplusplus
+#if !defined(__cplusplus) && !defined(__bool_true_false_are_defined)
 typedef unsigned char bool;
 #ifndef true
 #define true 1

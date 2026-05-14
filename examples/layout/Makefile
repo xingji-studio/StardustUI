@@ -105,6 +105,7 @@ XAPI_OUT_DIR := $(ROOT_DIR)/out/xapi
 XAPI_START_OBJECT := $(XAPI_OUT_DIR)/start.cpp.o
 XAPI_CORE_OBJECTS = $(shell find $(XAPI_OUT_DIR) -maxdepth 1 -name '*.o' | grep -v 'constart.cpp.o' | grep -v 'start.cpp.o')
 XAPI_HEADERS := $(shell find $(XAPI_DIR)/include -type f \( -name '*.h' -o -name '*.hpp' \))
+FRAMEWORK_XJ380_XAPI_HEADERS := $(shell find $(FRAMEWORK_DIR)/platforms/xj380/xapi -type f \( -name '*.h' -o -name '*.hpp' \))
 
 SRC_FILES += $(FRAMEWORK_DIR)/src/platforms/xj380.cpp
 OBJ_FILES += $(OBJ_DIR)/framework/platforms/xj380.o
@@ -214,7 +215,7 @@ $(OBJ_DIR)/framework/platforms/linux.o: $(FRAMEWORK_DIR)/src/platforms/linux.cpp
 	@$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c $< -o $@
 	@echo "CPP $< -> $@"
 
-$(OBJ_DIR)/framework/platforms/xj380.o: $(FRAMEWORK_DIR)/src/platforms/xj380.cpp $(FRAMEWORK_HEADERS) $(XAPI_HEADERS)
+$(OBJ_DIR)/framework/platforms/xj380.o: $(FRAMEWORK_DIR)/src/platforms/xj380.cpp $(FRAMEWORK_HEADERS) $(XAPI_HEADERS) $(FRAMEWORK_XJ380_XAPI_HEADERS)
 	@$(call make-dir,$(dir $@))
 	@$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c $< -o $@
 	@echo "CPP $< -> $@"
