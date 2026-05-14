@@ -1,7 +1,5 @@
 #pragma once
 
-
-
 #include "./stdint.h"
 #include "./krlibc.h"
 #include "./liballoc/alloc.h"
@@ -21,36 +19,46 @@
 #define SYS_MUNMAP 11
 #define SYS_BRK 12
 
+#define SYS_RT_SIGACTION 13
 #define SYS_RT_SIGPROCMASK 14
+#define SYS_RT_SIGRETURN 15
 
 #define SYS_IOCTL 16
 
 #define SYS_READV 19
 #define SYS_WRITEV 20
+#define SYS_ACCESS 21
 
 #define SYS_PIPE 22
+#define SYS_SELECT 23
+#define SYS_SCHED_YIELD 24
 
 #define SYS_MREMAP 25
 #define SYS_MSYNC 26
+#define SYS_MINCORE 27
 
 #define SYS_DUP 32
 #define SYS_DUP2 33
+#define SYS_DUP3 292
 #define SYS_PAUSE 34
 #define SYS_NANOSLEEP 35
 
 #define SYS_ALARM 37
 
 #define SYS_GETPID 39
+#define SYS_SENDFILE 40
 
 #define SYS_SOCKET 41
 #define SYS_CONNECT 42
 #define SYS_ACCEPT 43
+#define SYS_SOCKETPAIR 53
 
 #define SYS_SHUTDOWN 48
 
 #define SYS_BIND 49
 #define SYS_LISTEN 50
 
+#define SYS_CLONE 56
 #define SYS_FORK 57
 #define SYS_VFORK 58
 #define SYS_EXECVE 59
@@ -59,11 +67,13 @@
 #define SYS_KILL 62
 #define SYS_UNAME 63
 #define SYS_FCNTL 72
+#define SYS_FTRUNCATE 77
 
 #define SYS_GETDENTS 78
 #define SYS_GETCWD 79
 #define SYS_CHDIR 80
 #define SYS_FCHDIR 81
+#define SYS_RENAME 82
 
 #define SYS_MKDIR 83
 #define SYS_RMDIR 84
@@ -75,9 +85,27 @@
 #define SYS_CHMOD 90
 #define SYS_FCHMOD 91
 
+#define SYS_SYSINFO 99
+#define SYS_GETUID 102
+#define SYS_GETGID 104
+#define SYS_SETUID 105
+#define SYS_SETGID 106
+#define SYS_GETEUID 107
+#define SYS_GETEGID 108
+#define SYS_SETPGID 109
+#define SYS_GETPPID 110
+#define SYS_GETPGRP 111
+#define SYS_SETSID 112
+#define SYS_GETGROUPS 115
+#define SYS_GETSID 124
+#define SYS_GETPGID 121
 #define SYS_MKNOD 133
+#define SYS_STATFS 137
+#define SYS_PIVOT_ROOT 155
 
 #define SYS_ARCH_PRCTL 158
+#define SYS_MOUNT 165
+#define SYS_UMOUNT2 166
 
 #define ARCH_SET_FS 0x1002
 #define ARCH_GET_FS 0x1003
@@ -85,16 +113,40 @@
 #define ARCH_GET_GS 0x1005
 
 #define SYS_GETTID 186
+#define SYS_TIME 201
+#define SYS_GETDENTS64 217
 
 #define SYS_SET_TID_ADDRESS 218
+#define SYS_FADVISE64 221
 
 #define SYS_CLOCK_GETTIME 228
+#define SYS_CLOCK_GETRES 229
+#define SYS_CLOCK_NANOSLEEP 230
 
 #define SYS_EXIT_GROUP 231
+#define SYS_TGKILL 234
 
+#define SYS_OPENAT 257
+#define SYS_MKDIRAT 258
+#define SYS_NEWFSTATAT 262
+#define SYS_UNLINKAT 263
+#define SYS_RENAMEAT 264
+#define SYS_LINKAT 265
+#define SYS_SYMLINKAT 266
+#define SYS_READLINKAT 267
+#define SYS_FACCESSAT 269
+#define SYS_PSELECT6 270
 #define SYS_SET_ROBUST_LIST 273
+#define SYS_PIPE2 293
+#define SYS_FSYNC 74
+#define SYS_FDATASYNC 75
+#define SYS_FSTATFS 138
+#define SYS_COPY_FILE_RANGE 326
+#define SYS_STATX 332
 
 #define SYS_RSEQ 334
+#define SYS_FSOPEN 430
+#define SYS_FACCESSAT2 439
 
 
 
@@ -121,7 +173,7 @@
 
 #define XAPI_MAKEDIR        7425
 #define XAPI_CREATE_FILE    7420
-#define XAPI_DELETE_FILE    7421  
+#define XAPI_DELETE_FILE    7421
 #define XAPI_RENAME_FILE    7422
 #define XAPI_READ_FILE      7423
 #define XAPI_WRITE_FILE     7424
@@ -150,7 +202,7 @@
 #define XAPI_SLEEP          7430
 
 #define XAPI_RUN            7439
-#define XAPI_RUN_WITH_ARGS  7450
+#define XAPI_RUN_ARGS       7450
 
 #define XAPI_FLUSH_TIME     7445
 
@@ -219,6 +271,7 @@ typedef struct
 #define MSG_ROLLER  5
 #define MSG_CRL     6
 #define MSG_SPCHAR  7
+#define MSG_RESIZE  8
 
 // P4.5
 #define XAPI_READBUFFER     7406
@@ -238,4 +291,13 @@ typedef struct
 #define XAPI_REG_RB_MENU    7436
 #define XAPI_URG_RB_MENU    7437
 
+#define XWIN_TYPE_MASK         0x0f
+#define XWIN_SUPPORT_RESIZEABLE  0x80
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 uint64_t enter_syscall(uint64_t syscall_number, uint64_t arg1, uint64_t arg2, uint64_t arg3, uint64_t arg4, uint64_t arg5, uint64_t arg6);
+#ifdef __cplusplus
+}
+#endif

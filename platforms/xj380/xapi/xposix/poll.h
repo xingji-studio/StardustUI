@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../stdint.h"
+#include "sys/types.h"
 
 #define POLLIN  0x0001
 #define POLLPRI 0x0002
@@ -20,7 +20,7 @@ struct pollfd {
     short revents;
 };
 
-int poll(struct pollfd *fds, uint64_t nfds, uint64_t timeout_ms);
+int poll(struct pollfd *fds, nfds_t nfds, int timeout_ms);
 
 #ifdef __cplusplus
 }
