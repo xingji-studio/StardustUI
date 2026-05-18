@@ -179,6 +179,7 @@
 #define XAPI_WRITE_FILE     7424
 
 #define XAPI_REMOVEDIR      7444
+#define XAPI_FILE_DIALOG    7450
 
 // P3.4
 #define XAPI_FORK   7389
@@ -202,7 +203,7 @@
 #define XAPI_SLEEP          7430
 
 #define XAPI_RUN            7439
-#define XAPI_RUN_ARGS       7450
+#define XAPI_RUN_ARGS       7451
 
 #define XAPI_FLUSH_TIME     7445
 
