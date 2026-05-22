@@ -21,30 +21,19 @@ The top-level `Makefile` selects a platform automatically when possible, and you
 
 The Linux backend currently uses SDL2 and SDL_ttf.
 
-On Arch Linux:
+The dependencies currently required:
 
+| Package manager | Command |
+| :--- | :--- |
+| **pacman** | `sudo pacman -S sdl2 sdl2_ttf` |
+| **apt** | `sudo apt update && sudo apt install libsdl2-dev libsdl2-ttf-dev` |
+| **dnf** | `sudo dnf install SDL2-devel SDL2_ttf-devel` |
+| **yum** | `sudo yum install SDL2-devel SDL2_ttf-devel` |
+
+And then:
 ```bash
-sudo pacman -S sdl2 sdl2_ttf
 make PLATFORM=linux
 ```
-
-On Debian/Ubuntu :
-``` bash
-sudo apt update
-sudo apt install libsdl2-dev libsdl2-ttf-dev
-
-make PLATFORM=linux
-``` 
-
-On RHEL :
-``` bash
-#New version of RHEL/Rocky
-sudo dnf install SDL2-devel SDL2_ttf-devel
-#Old version of RHEL/CentOS
-sudo yum install SDL2-devel SDL2_ttf-devel
-
-make PLATFORM=linux
-``` 
 
 This produces:
 
