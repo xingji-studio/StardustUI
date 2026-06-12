@@ -15,7 +15,7 @@ StardustUI currently builds for:
 - `linux`
 - `windows`
 
-The top-level `Makefile` selects a platform automatically when possible, and you can also override it with `PLATFORM=...`.
+This repository now uses `ninja` to build the framework and examples.
 
 ## Linux
 
@@ -25,7 +25,7 @@ On Arch Linux:
 
 ```bash
 sudo pacman -S sdl2 sdl2_ttf
-make PLATFORM=linux
+ninja -C . lib-linux
 ```
 
 On Debian/Ubuntu :
@@ -33,7 +33,7 @@ On Debian/Ubuntu :
 sudo apt update
 sudo apt install libsdl2-dev libsdl2-ttf-dev
 
-make PLATFORM=linux
+ninja -C . lib-linux
 ``` 
 
 On RHEL :
@@ -43,13 +43,13 @@ sudo dnf install SDL2-devel SDL2_ttf-devel
 #Old version of RHEL/CentOS
 sudo yum install SDL2-devel SDL2_ttf-devel
 
-make PLATFORM=linux
+ninja -C . lib-linux
 ``` 
 
 This produces:
 
 ```text
-build/libStardustUI.a
+build/libStardustUI-linux.a
 ```
 
 ## Windows
@@ -57,7 +57,7 @@ build/libStardustUI.a
 You can build the Windows backend with MinGW:
 
 ```bash
-make PLATFORM=windows CXX=x86_64-w64-mingw32-g++
+CXX=x86_64-w64-mingw32-g++ ninja -C . lib-windows
 ```
 
 ## XJ380
@@ -65,10 +65,10 @@ make PLATFORM=windows CXX=x86_64-w64-mingw32-g++
 Build with:
 
 ```bash
-make PLATFORM=xj380
+ninja -C . lib-xj380
 ```
 
-This requires the XJ380 toolchain and related objects used by the repository's `Makefile`.
+This requires the XJ380 toolchain and related repository objects.
 
 ## Platform detection
 
@@ -83,6 +83,7 @@ If you do not define a platform macro manually, `settings.hpp` currently uses:
 Current examples:
 
 - `examples/helloworld`
+- `examples/showcase`
 - `examples/duckchat`
 
 ### `helloworld`
@@ -91,7 +92,7 @@ Linux:
 
 ```bash
 cd examples/helloworld
-make PLATFORM=linux
+ninja helloworld-linux
 ./build/linux/helloworld
 ```
 
@@ -99,14 +100,38 @@ Windows:
 
 ```bash
 cd examples/helloworld
-make PLATFORM=windows CXX=x86_64-w64-mingw32-g++
+CXX=x86_64-w64-mingw32-g++ ninja helloworld-windows
 ```
 
 XJ380:
 
 ```bash
 cd examples/helloworld
-make PLATFORM=xj380
+ninja copy-xj380
+```
+
+### `showcase`
+
+Linux:
+
+```bash
+cd examples/showcase
+ninja showcase-linux
+./build/linux/showcase
+```
+
+Windows:
+
+```bash
+cd examples/showcase
+CXX=x86_64-w64-mingw32-g++ ninja showcase-windows
+```
+
+XJ380:
+
+```bash
+cd examples/showcase
+ninja copy-xj380
 ```
 
 ### `duckchat`
@@ -115,7 +140,7 @@ Linux:
 
 ```bash
 cd examples/duckchat
-make PLATFORM=linux
+ninja duckchat-linux
 ./build/linux/duckchat
 ```
 
@@ -123,14 +148,14 @@ Windows:
 
 ```bash
 cd examples/duckchat
-make PLATFORM=windows CXX=x86_64-w64-mingw32-g++
+CXX=x86_64-w64-mingw32-g++ ninja duckchat-windows
 ```
 
 XJ380:
 
 ```bash
 cd examples/duckchat
-make PLATFORM=xj380
+ninja copy-xj380
 ```
 
 This example is a complete chat UI that includes:
@@ -152,8 +177,11 @@ For custom colors, generate a Material 3 theme first with:
 - [Create a Window](./create_window.md)
 - [Style System](./style.md)
 - [Button component](./button.md)
+- [Checkbox component](./checkbox.md)
+- [RadioButton component](./radiobutton.md)
 - [TextBox component](./textbox.md)
 - [ScrollBar component](./scrollbar.md)
 - [Layout System](./layout.md)
 - [Canvas Component](./canvas.md)
+- [Widget showcase](./showcase.md)
 - [DuckChat tutorial](./duckchat_tutorial.md)

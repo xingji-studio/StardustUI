@@ -1,4 +1,5 @@
 #include "../../includes/components/button.hpp"
+#include "../../includes/theme.hpp"
 #include "../../settings.hpp"
 #include "../../platforms/platform.hpp"
 
@@ -22,7 +23,8 @@ Button::Button(const stardustui::string& text, int width, int height, const Syte
 Button::~Button() = default;
 
 void Button::draw(unsigned long long handle) {
-    const Sytel style = this->resolve_style();
+    Sytel style = stardustui::Theme::component_style("button");
+    style.merge_from(this->resolve_style());
     const unsigned int background_color = style.get_background_color(0x6750A4FF);
     const unsigned int border_color = style.get_border_color(background_color);
     const unsigned int border_width = style.get_border_width(1);

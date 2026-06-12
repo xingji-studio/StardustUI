@@ -86,7 +86,7 @@ Linux:
 
 ```bash
 cd examples/helloworld
-make PLATFORM=linux
+ninja helloworld-linux
 ./build/linux/helloworld
 ```
 
@@ -94,14 +94,14 @@ Windows:
 
 ```bash
 cd examples/helloworld
-make PLATFORM=windows CXX=x86_64-w64-mingw32-g++
+CXX=x86_64-w64-mingw32-g++ ninja helloworld-windows
 ```
 
 XJ380:
 
 ```bash
 cd examples/helloworld
-make PLATFORM=xj380
+ninja copy-xj380
 ```
 
 ## Notes

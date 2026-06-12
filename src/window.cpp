@@ -1,4 +1,5 @@
 #include "../includes/window.hpp"
+#include "../includes/theme.hpp"
 namespace {
 Window* g_active_window = nullptr;
 
@@ -42,7 +43,7 @@ void Window::show() {
 	append_debug_log("stardustui: create_window ok\n");
 	g_active_window = this;
 	this->background_needs_clear = true;
-	draw_rect(this->handle, 0, 0, this->width, this->height, 0xFFFFFFFF);
+	draw_rect(this->handle, 0, 0, this->width, this->height, stardustui::Theme::colors().background);
 	refresh_window(this->handle);
 	append_debug_log("stardustui: set_window_message_processor begin\n");
 	set_window_message_processor(this->handle, dispatch_window_message);
@@ -195,11 +196,11 @@ void Window::draw_components() {
 	clear_draw_commands(this->handle);
 #ifdef XJ380
 	if (this->background_needs_clear) {
-		draw_rect(this->handle, 0, 0, this->width, this->height, 0xFFFFFFFF);
+		draw_rect(this->handle, 0, 0, this->width, this->height, stardustui::Theme::colors().background);
 		this->background_needs_clear = false;
 	}
 #else
-	draw_rect(this->handle, 0, 0, this->width, this->height, 0xFFFFFFFF);
+	draw_rect(this->handle, 0, 0, this->width, this->height, stardustui::Theme::colors().background);
 #endif
 	for (int i = 0; i < this->components.size(); ++i) {
 		if (this->components[i] != nullptr) {

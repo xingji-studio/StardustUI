@@ -1,4 +1,5 @@
 #include "../../includes/components/scrollbar.hpp"
+#include "../../includes/theme.hpp"
 
 namespace {
 int clamp_int(int value, int minimum, int maximum) {
@@ -42,7 +43,8 @@ ScrollBar::ScrollBar(int width, int height, const SytelRules& style)
 ScrollBar::~ScrollBar() = default;
 
 void ScrollBar::draw(unsigned long long handle) {
-    const Sytel style = this->resolve_style();
+    Sytel style = stardustui::Theme::component_style("scrollbar");
+    style.merge_from(this->resolve_style());
     const unsigned int background_color = style.get_background_color(0xE7E0EBFF);
     const unsigned int border_color = style.get_border_color(background_color);
     const unsigned int border_width = style.get_border_width(1);

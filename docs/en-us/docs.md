@@ -9,11 +9,14 @@ This directory documents the current code in this repository.
 3. [Create a window](./create_window.md)
 4. [Style system](./style.md)
 5. [Button component](./button.md)
-6. [TextBox component](./textbox.md)
-7. [ScrollBar component](./scrollbar.md)
-8. [Layout system](./layout.md)
-9. [Canvas component](./canvas.md)
-10. [DuckChat tutorial](./duckchat_tutorial.md)
+6. [Checkbox component](./checkbox.md)
+7. [RadioButton component](./radiobutton.md)
+8. [TextBox component](./textbox.md)
+9. [ScrollBar component](./scrollbar.md)
+10. [Layout system](./layout.md)
+11. [Canvas component](./canvas.md)
+12. [Widget showcase](./showcase.md)
+13. [DuckChat tutorial](./duckchat_tutorial.md)
 
 ## Current platform targets
 

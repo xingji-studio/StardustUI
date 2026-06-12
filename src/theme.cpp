@@ -11,6 +11,7 @@ stardustui::string* g_theme_name = nullptr;
 stardustui::string* g_theme_version = nullptr;
 Font* g_theme_font = nullptr;
 stardustui::Colors g_theme_colors;
+stardustui::ComponentStyles g_theme_component_styles;
 
 stardustui::string& theme_path_storage()
 {
@@ -266,6 +267,39 @@ bool parse_color_text(const char* text, unsigned int& color)
     return true;
 }
 
+bool get_named_color(const stardustui::Colors& colors, const stardustui::string& name, unsigned int& color)
+{
+    if (name.equals("primary")) { color = colors.primary; return true; }
+    if (name.equals("on_primary")) { color = colors.on_primary; return true; }
+    if (name.equals("primary_container")) { color = colors.primary_container; return true; }
+    if (name.equals("on_primary_container")) { color = colors.on_primary_container; return true; }
+    if (name.equals("secondary")) { color = colors.secondary; return true; }
+    if (name.equals("on_secondary")) { color = colors.on_secondary; return true; }
+    if (name.equals("secondary_container")) { color = colors.secondary_container; return true; }
+    if (name.equals("on_secondary_container")) { color = colors.on_secondary_container; return true; }
+    if (name.equals("tertiary")) { color = colors.tertiary; return true; }
+    if (name.equals("on_tertiary")) { color = colors.on_tertiary; return true; }
+    if (name.equals("tertiary_container")) { color = colors.tertiary_container; return true; }
+    if (name.equals("on_tertiary_container")) { color = colors.on_tertiary_container; return true; }
+    if (name.equals("error")) { color = colors.error; return true; }
+    if (name.equals("on_error")) { color = colors.on_error; return true; }
+    if (name.equals("error_container")) { color = colors.error_container; return true; }
+    if (name.equals("on_error_container")) { color = colors.on_error_container; return true; }
+    if (name.equals("background")) { color = colors.background; return true; }
+    if (name.equals("on_background")) { color = colors.on_background; return true; }
+    if (name.equals("surface")) { color = colors.surface; return true; }
+    if (name.equals("on_surface")) { color = colors.on_surface; return true; }
+    if (name.equals("surface_variant")) { color = colors.surface_variant; return true; }
+    if (name.equals("on_surface_variant")) { color = colors.on_surface_variant; return true; }
+    if (name.equals("inverse_surface")) { color = colors.inverse_surface; return true; }
+    if (name.equals("inverse_on_surface")) { color = colors.inverse_on_surface; return true; }
+    if (name.equals("outline")) { color = colors.outline; return true; }
+    if (name.equals("outline_variant")) { color = colors.outline_variant; return true; }
+    if (name.equals("scrim")) { color = colors.scrim; return true; }
+    if (name.equals("shadow")) { color = colors.shadow; return true; }
+    return false;
+}
+
 bool find_key_value(const char* start,
                     const char* end,
                     const char* key,
@@ -384,6 +418,41 @@ bool extract_color_value(const char* start,
     return false;
 }
 
+bool extract_color_value_with_palette(const char* start,
+                                      const char* end,
+                                      const char* key,
+                                      const stardustui::Colors& palette,
+                                      unsigned int fallback,
+                                      unsigned int& out)
+{
+    const char* value_start = nullptr;
+    if (!find_key_value(start, end, key, value_start)) {
+        out = fallback;
+        return false;
+    }
+
+    if (*value_start == '"') {
+        stardustui::string text;
+        if (extract_string_value(value_start, text)) {
+            if (parse_color_text(text.c_str(), out)) {
+                return true;
+            }
+            if (get_named_color(palette, text, out)) {
+                return true;
+            }
+        }
+    } else {
+        unsigned int value = 0;
+        if (extract_uint_value(value_start, value)) {
+            out = value;
+            return true;
+        }
+    }
+
+    out = fallback;
+    return false;
+}
+
 const char* find_matching_brace(const char* start)
 {
     if (start == nullptr || *start != '{') {
@@ -453,6 +522,65 @@ stardustui::Colors md3_default_colors()
     return colors;
 }
 
+stardustui::ComponentStyles default_component_styles(const stardustui::Colors& colors)
+{
+    stardustui::ComponentStyles styles;
+
+    styles.button.set_color(colors.on_primary);
+    styles.button.set_size(16);
+    styles.button.set_background_color(colors.primary);
+    styles.button.set_border_color(colors.primary);
+    styles.button.set_border_width(1);
+    styles.button.set_radius(20);
+    styles.button.set_padding(12);
+
+    styles.textbox.set_color(colors.on_surface);
+    styles.textbox.set_size(16);
+    styles.textbox.set_background_color(colors.surface);
+    styles.textbox.set_border_color(colors.outline_variant);
+    styles.textbox.set_border_width(1);
+    styles.textbox.set_radius(12);
+    styles.textbox.set_padding(12);
+
+    styles.scrollbar.set_color(colors.primary);
+    styles.scrollbar.set_background_color(colors.surface_variant);
+    styles.scrollbar.set_border_color(colors.outline_variant);
+    styles.scrollbar.set_border_width(1);
+    styles.scrollbar.set_radius(8);
+
+    styles.checkbox.set_color(colors.primary);
+    styles.checkbox.set_size(16);
+    styles.checkbox.set_background_color(colors.surface);
+    styles.checkbox.set_border_color(colors.outline);
+    styles.checkbox.set_border_width(2);
+    styles.checkbox.set_radius(6);
+    styles.checkbox.set_padding(10);
+
+    styles.radio.set_color(colors.primary);
+    styles.radio.set_size(16);
+    styles.radio.set_background_color(colors.surface);
+    styles.radio.set_border_color(colors.outline);
+    styles.radio.set_border_width(2);
+    styles.radio.set_radius(10);
+    styles.radio.set_padding(10);
+
+    styles.panel.set_background_color(colors.surface_variant);
+    styles.panel.set_border_color(colors.outline_variant);
+    styles.panel.set_border_width(1);
+    styles.panel.set_radius(16);
+    styles.panel.set_padding(16);
+
+    styles.code_block.set_color(colors.inverse_on_surface);
+    styles.code_block.set_size(15);
+    styles.code_block.set_background_color(colors.inverse_surface);
+    styles.code_block.set_border_color(colors.outline);
+    styles.code_block.set_border_width(1);
+    styles.code_block.set_radius(12);
+    styles.code_block.set_padding(12);
+
+    return styles;
+}
+
 void ensure_theme_defaults()
 {
     if (g_theme_initialized) {
@@ -460,11 +588,89 @@ void ensure_theme_defaults()
     }
 
     g_theme_colors = md3_default_colors();
+    g_theme_component_styles = default_component_styles(g_theme_colors);
     theme_path_storage().assign("");
     theme_name_storage().assign("md3-light");
     theme_version_storage().assign("1.0");
     theme_font_storage().clear();
     g_theme_initialized = true;
+}
+
+void apply_sytel_overrides(const char* start,
+                           const char* end,
+                           const stardustui::Colors& palette,
+                           Sytel& style)
+{
+    unsigned int value = 0;
+    const char* value_start = nullptr;
+
+    if (extract_color_value_with_palette(start, end, "color", palette, style.get_color(0), value)) {
+        style.set_color(value);
+    }
+
+    if (extract_color_value_with_palette(start, end, "background_color", palette, style.get_background_color(0), value)) {
+        style.set_background_color(value);
+    }
+
+    if (extract_color_value_with_palette(start, end, "border_color", palette, style.get_border_color(0), value)) {
+        style.set_border_color(value);
+    }
+
+    unsigned int uint_value = 0;
+    if (find_key_value(start, end, "size", value_start) && extract_uint_value(value_start, uint_value)) {
+        style.set_size(uint_value);
+    }
+    if (find_key_value(start, end, "border_width", value_start) && extract_uint_value(value_start, uint_value)) {
+        style.set_border_width(uint_value);
+    }
+    if (find_key_value(start, end, "radius", value_start) && extract_uint_value(value_start, uint_value)) {
+        style.set_radius(uint_value);
+    }
+    if (find_key_value(start, end, "padding", value_start) && extract_uint_value(value_start, uint_value)) {
+        style.set_padding(uint_value);
+    }
+}
+
+void apply_component_style_override(const char* container_start,
+                                    const char* container_end,
+                                    const char* key,
+                                    const stardustui::Colors& palette,
+                                    Sytel& style)
+{
+    const char* component_value = nullptr;
+    if (!find_key_value(container_start, container_end, key, component_value) || *component_value != '{') {
+        return;
+    }
+
+    const char* component_end = find_matching_brace(component_value);
+    if (component_end == nullptr) {
+        return;
+    }
+
+    apply_sytel_overrides(component_value, component_end, palette, style);
+}
+
+void apply_component_style_overrides(const char* text,
+                                     const stardustui::Colors& palette,
+                                     stardustui::ComponentStyles& styles)
+{
+    const char* components_value = nullptr;
+    if (!find_key_value(text, nullptr, "components", components_value) || *components_value != '{') {
+        return;
+    }
+
+    const char* components_end = find_matching_brace(components_value);
+    if (components_end == nullptr) {
+        return;
+    }
+
+    apply_component_style_override(components_value, components_end, "button", palette, styles.button);
+    apply_component_style_override(components_value, components_end, "textbox", palette, styles.textbox);
+    apply_component_style_override(components_value, components_end, "scrollbar", palette, styles.scrollbar);
+    apply_component_style_override(components_value, components_end, "checkbox", palette, styles.checkbox);
+    apply_component_style_override(components_value, components_end, "radio", palette, styles.radio);
+    apply_component_style_override(components_value, components_end, "panel", palette, styles.panel);
+    apply_component_style_override(components_value, components_end, "code_block", palette, styles.code_block);
 }
 
 void apply_color_overrides(const char* start,
@@ -596,6 +802,7 @@ bool stardustui::Theme::load_theme(const stardustui::string &path_or_name)
     }
 
     stardustui::Colors parsed_colors = md3_default_colors();
+    stardustui::ComponentStyles parsed_component_styles = default_component_styles(parsed_colors);
     stardustui::string parsed_name("md3-light");
     stardustui::string parsed_version("1.0");
     Font parsed_font;
@@ -612,9 +819,13 @@ bool stardustui::Theme::load_theme(const stardustui::string &path_or_name)
         }
     }
 
+    parsed_component_styles = default_component_styles(parsed_colors);
+    apply_component_style_overrides(text, parsed_colors, parsed_component_styles);
+
     apply_font_overrides(text, parsed_font);
 
     g_theme_colors = parsed_colors;
+    g_theme_component_styles = parsed_component_styles;
     theme_path_storage() = resolved_path;
     theme_name_storage() = parsed_name;
     theme_version_storage() = parsed_version;
@@ -689,6 +900,25 @@ const stardustui::Colors& stardustui::Theme::colors()
 {
     ensure_theme_defaults();
     return g_theme_colors;
+}
+
+const stardustui::ComponentStyles& stardustui::Theme::component_styles()
+{
+    ensure_theme_defaults();
+    return g_theme_component_styles;
+}
+
+const Sytel& stardustui::Theme::component_style(const stardustui::string& name)
+{
+    ensure_theme_defaults();
+    if (name.equals("button")) return g_theme_component_styles.button;
+    if (name.equals("textbox")) return g_theme_component_styles.textbox;
+    if (name.equals("scrollbar")) return g_theme_component_styles.scrollbar;
+    if (name.equals("checkbox")) return g_theme_component_styles.checkbox;
+    if (name.equals("radio")) return g_theme_component_styles.radio;
+    if (name.equals("panel")) return g_theme_component_styles.panel;
+    if (name.equals("code_block")) return g_theme_component_styles.code_block;
+    return g_theme_component_styles.panel;
 }
 
 const Font& stardustui::Theme::font()

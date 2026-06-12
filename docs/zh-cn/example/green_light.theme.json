@@ -34,5 +34,42 @@
         "outline_variant": "#bec9c5",
         "scrim": "#000000",
         "shadow": "#000000"
+    },
+    "components": {
+        "button": {
+            "radius": 18,
+            "padding": 12,
+            "background_color": "primary",
+            "color": "on_primary"
+        },
+        "textbox": {
+            "radius": 14,
+            "padding": 12,
+            "background_color": "surface",
+            "border_color": "outline_variant"
+        },
+        "checkbox": {
+            "radius": 7,
+            "border_width": 2,
+            "border_color": "outline",
+            "color": "primary"
+        },
+        "radio": {
+            "radius": 10,
+            "border_width": 2,
+            "border_color": "outline",
+            "color": "primary"
+        },
+        "panel": {
+            "radius": 18,
+            "padding": 16,
+            "background_color": "surface_variant"
+        },
+        "code_block": {
+            "radius": 12,
+            "padding": 12,
+            "background_color": "inverse_surface",
+            "color": "inverse_on_surface"
+        }
     }
 }

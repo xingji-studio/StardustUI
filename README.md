@@ -23,6 +23,20 @@
 ## How to use it🎊
 ### [Docs](https://github.com/xingji-studio/StardustUI/blob/main/docs%2Fen-us%2Fdocs.md)
 
+## Build with Ninja
+
+```bash
+ninja -C frameworks/StardustUI lib-linux
+ninja -C frameworks/StardustUI/examples/helloworld helloworld-linux
+ninja -C frameworks/StardustUI/examples/showcase showcase-linux
+```
+
+## Available example targets
+
+- `frameworks/StardustUI/examples/helloworld`
+- `frameworks/StardustUI/examples/showcase`
+- `frameworks/StardustUI/examples/duckchat`
+
 ## Star History
 
 <a href="https://www.star-history.com/?repos=xingji-studio%2FStardustUI&type=timeline&logscale=&legend=top-left">
@@ -32,4 +46,3 @@
    <img alt="Star History Chart" src="https://api.star-history.com/chart?repos=xingji-studio/StardustUI&type=timeline&logscale&legend=top-left" />
  </picture>
 </a>
-
