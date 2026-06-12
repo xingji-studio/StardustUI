@@ -1,5 +1,6 @@
 #pragma once
 #include "./string.hpp"
+#include "./sytle.hpp"
 #include "./text/font.hpp"
 namespace stardustui {
 struct Colors{
@@ -32,6 +33,17 @@ struct Colors{
     unsigned int scrim;
     unsigned int shadow;
 };
+
+struct ComponentStyles {
+    Sytel button;
+    Sytel textbox;
+    Sytel scrollbar;
+    Sytel checkbox;
+    Sytel radio;
+    Sytel panel;
+    Sytel code_block;
+};
+
 class Theme{
     public:
         Theme();
@@ -48,6 +60,8 @@ class Theme{
         static Font get_theme_font();
         static Font get_theme_font(const stardustui::string& name);
         static const Colors& colors();
+        static const ComponentStyles& component_styles();
+        static const Sytel& component_style(const stardustui::string& name);
         static const Font& font();
         static const stardustui::string& path();
         static const stardustui::string& name();

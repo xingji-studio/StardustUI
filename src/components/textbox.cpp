@@ -1,4 +1,5 @@
 #include "../../includes/components/textbox.hpp"
+#include "../../includes/theme.hpp"
 #include "../../settings.hpp"
 #include "../../platforms/platform.hpp"
 
@@ -91,7 +92,8 @@ TextBox::~TextBox() = default;
 
 void TextBox::draw(unsigned long long handle) {
     this->update_layout();
-    const Sytel style = this->resolve_style();
+    Sytel style = stardustui::Theme::component_style("textbox");
+    style.merge_from(this->resolve_style());
     const unsigned int background_color = style.get_background_color(0xFFFBFFFF);
     const unsigned int border_color = style.get_border_color(this->has_focus() ? 0x6750A4FF : 0xCAC4CFFF);
     const unsigned int border_width = style.get_border_width(1);

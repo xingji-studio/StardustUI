@@ -9,11 +9,14 @@
 3. [创建窗口](./create_window.md)
 4. [样式系统](./style.md)
 5. [Button 控件](./button.md)
-6. [TextBox 控件](./textbox.md)
-7. [ScrollBar 控件](./scrollbar.md)
-8. [布局系统](./layout.md)
-9. [Canvas 控件](./canvas.md)
-10. [DuckChat 教程](./duckchat_tutorial.md)
+6. [Checkbox 控件](./checkbox.md)
+7. [RadioButton 控件](./radiobutton.md)
+8. [TextBox 控件](./textbox.md)
+9. [ScrollBar 控件](./scrollbar.md)
+10. [布局系统](./layout.md)
+11. [Canvas 控件](./canvas.md)
+12. [控件展示示例](./showcase.md)
+13. [DuckChat 教程](./duckchat_tutorial.md)
 
 ## 当前平台目标
 

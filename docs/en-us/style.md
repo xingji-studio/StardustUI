@@ -126,6 +126,11 @@ The style system is already wired into:
 
 - `base_component`
 - `Lable`
+- `Button`
+- `Checkbox`
+- `RadioButton`
+- `TextBox`
+- `ScrollBar`
 - `Canvas`
 - `FlexLayout`
 
@@ -136,7 +141,20 @@ The style system is already wired into:
 
 `Lable::contains(...)` also uses the resolved text size for hover hit testing.
 
-`Canvas` and `FlexLayout` inherit the same base style and redraw mechanism, but they do not currently render borders, background color, radius, or padding automatically from `Sytel`. Those values remain available for higher-level components and future expansion.
+`Theme` now also supports component default styles in theme JSON, for example:
+
+```json
+"components": {
+  "button": { "radius": 20, "padding": 12, "background_color": "primary" },
+  "textbox": { "radius": 12, "padding": 12, "border_color": "outline_variant" },
+  "checkbox": { "radius": 6, "border_width": 2, "color": "primary" },
+  "radio": { "radius": 10, "border_width": 2, "color": "primary" },
+  "panel": { "radius": 16, "padding": 16, "background_color": "surface_variant" },
+  "code_block": { "radius": 12, "padding": 12, "background_color": "inverse_surface" }
+}
+```
+
+Theme defaults are applied first, then the component's own `SytelRules` can override them.
 
 ## Related pages
 
@@ -144,3 +162,6 @@ The style system is already wired into:
 - [Quick Start](./quickstart.md)
 - [Layout System](./layout.md)
 - [Canvas Component](./canvas.md)
+- [Checkbox component](./checkbox.md)
+- [RadioButton component](./radiobutton.md)
+- [Widget showcase](./showcase.md)

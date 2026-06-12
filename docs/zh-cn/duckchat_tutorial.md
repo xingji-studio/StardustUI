@@ -233,7 +233,7 @@ Linux：
 
 ```bash
 cd examples/duckchat
-make PLATFORM=linux
+ninja duckchat-linux
 ./build/linux/duckchat green_light
 ```
 
@@ -241,14 +241,14 @@ Windows：
 
 ```bash
 cd examples/duckchat
-make PLATFORM=windows CXX=x86_64-w64-mingw32-g++
+CXX=x86_64-w64-mingw32-g++ ninja duckchat-windows
 ```
 
 XJ380：
 
 ```bash
 cd examples/duckchat
-make PLATFORM=xj380
+ninja copy-xj380
 ```
 
 ## 建议的开发顺序
@@ -264,7 +264,6 @@ make PLATFORM=xj380
 ## 相关文件
 
 - 示例源码：`examples/duckchat/duckchat.cpp`
-- 示例构建：`examples/duckchat/Makefile`
+- 示例构建：`examples/duckchat/build.ninja`
 - 主题系统：`src/theme.cpp`
 - 网络接口：`src/network.cpp`
-

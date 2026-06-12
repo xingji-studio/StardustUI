@@ -29,15 +29,19 @@
 - [创建窗口](./create_window.md)
 - [样式系统](./style.md)
 - [Button 控件](./button.md)
+- [Checkbox 控件](./checkbox.md)
+- [RadioButton 控件](./radiobutton.md)
 - [TextBox 控件](./textbox.md)
 - [ScrollBar 控件](./scrollbar.md)
 - [布局系统](./layout.md)
 - [Canvas 控件](./canvas.md)
+- [控件展示示例](./showcase.md)
 - [DuckChat 教程](./duckchat_tutorial.md)
 
 ## 示例
 
 - `examples/helloworld`
+- `examples/showcase`
 - `examples/duckchat`
 
 ## 主题生成器

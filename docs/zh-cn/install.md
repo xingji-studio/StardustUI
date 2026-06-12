@@ -15,7 +15,7 @@ StardustUI 目前支持：
 - `linux`
 - `windows`
 
-顶层 `Makefile` 会尽量自动选择平台，也可以手动指定 `PLATFORM=...`。
+当前仓库使用 `ninja` 构建框架和示例。
 
 ## Linux
 
@@ -25,7 +25,7 @@ StardustUI 目前支持：
 
 ```bash
 sudo pacman -S sdl2 sdl2_ttf
-make PLATFORM=linux
+ninja -C . lib-linux
 ```
 
 在 Debian/Ubuntu 上：
@@ -33,7 +33,7 @@ make PLATFORM=linux
 sudo apt update
 sudo apt install libsdl2-dev libsdl2-ttf-dev
 
-make PLATFORM=linux
+ninja -C . lib-linux
 ``` 
 
 在 RHEL 上：
@@ -43,13 +43,13 @@ sudo dnf install SDL2-devel SDL2_ttf-devel
 #老版本RHEL/CentOS
 sudo yum install SDL2-devel SDL2_ttf-devel
 
-make PLATFORM=linux
+ninja -C . lib-linux
 ``` 
 
 产物位置：
 
 ```text
-build/libStardustUI.a
+build/libStardustUI-linux.a
 ```
 
 ## Windows
@@ -57,7 +57,7 @@ build/libStardustUI.a
 可以使用 MinGW 交叉编译：
 
 ```bash
-make PLATFORM=windows CXX=x86_64-w64-mingw32-g++
+CXX=x86_64-w64-mingw32-g++ ninja -C . lib-windows
 ```
 
 ## XJ380
@@ -65,7 +65,7 @@ make PLATFORM=windows CXX=x86_64-w64-mingw32-g++
 构建方式：
 
 ```bash
-make PLATFORM=xj380
+ninja -C . lib-xj380
 ```
 
 这个目标依赖仓库里现有的 XJ380 工具链和相关对象文件。
@@ -83,6 +83,7 @@ make PLATFORM=xj380
 当前示例包括：
 
 - `examples/helloworld`
+- `examples/showcase`
 - `examples/duckchat`
 
 ### `helloworld`
@@ -91,7 +92,7 @@ Linux：
 
 ```bash
 cd examples/helloworld
-make PLATFORM=linux
+ninja helloworld-linux
 ./build/linux/helloworld
 ```
 
@@ -99,14 +100,38 @@ Windows：
 
 ```bash
 cd examples/helloworld
-make PLATFORM=windows CXX=x86_64-w64-mingw32-g++
+CXX=x86_64-w64-mingw32-g++ ninja helloworld-windows
 ```
 
 XJ380：
 
 ```bash
 cd examples/helloworld
-make PLATFORM=xj380
+ninja copy-xj380
+```
+
+### `showcase`
+
+Linux：
+
+```bash
+cd examples/showcase
+ninja showcase-linux
+./build/linux/showcase
+```
+
+Windows：
+
+```bash
+cd examples/showcase
+CXX=x86_64-w64-mingw32-g++ ninja showcase-windows
+```
+
+XJ380：
+
+```bash
+cd examples/showcase
+ninja copy-xj380
 ```
 
 ### `duckchat`
@@ -115,7 +140,7 @@ Linux：
 
 ```bash
 cd examples/duckchat
-make PLATFORM=linux
+ninja duckchat-linux
 ./build/linux/duckchat
 ```
 
@@ -123,14 +148,14 @@ Windows：
 
 ```bash
 cd examples/duckchat
-make PLATFORM=windows CXX=x86_64-w64-mingw32-g++
+CXX=x86_64-w64-mingw32-g++ ninja duckchat-windows
 ```
 
 XJ380：
 
 ```bash
 cd examples/duckchat
-make PLATFORM=xj380
+ninja copy-xj380
 ```
 
 这个示例是一个完整聊天界面，包含：
@@ -152,8 +177,11 @@ make PLATFORM=xj380
 - [创建窗口](./create_window.md)
 - [样式系统](./style.md)
 - [Button 控件](./button.md)
+- [Checkbox 控件](./checkbox.md)
+- [RadioButton 控件](./radiobutton.md)
 - [TextBox 控件](./textbox.md)
 - [ScrollBar 控件](./scrollbar.md)
 - [布局系统](./layout.md)
 - [Canvas 控件](./canvas.md)
+- [控件展示示例](./showcase.md)
 - [DuckChat 教程](./duckchat_tutorial.md)

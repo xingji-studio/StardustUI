@@ -227,7 +227,7 @@ Linux:
 
 ```bash
 cd examples/duckchat
-make PLATFORM=linux
+ninja duckchat-linux
 ./build/linux/duckchat green_light
 ```
 
@@ -235,14 +235,14 @@ Windows:
 
 ```bash
 cd examples/duckchat
-make PLATFORM=windows CXX=x86_64-w64-mingw32-g++
+CXX=x86_64-w64-mingw32-g++ ninja duckchat-windows
 ```
 
 XJ380:
 
 ```bash
 cd examples/duckchat
-make PLATFORM=xj380
+ninja copy-xj380
 ```
 
 ## Recommended implementation order
@@ -258,7 +258,6 @@ Build in this order:
 ## Related files
 
 - example source: `examples/duckchat/duckchat.cpp`
-- example build: `examples/duckchat/Makefile`
+- example build: `examples/duckchat/build.ninja`
 - theme system: `src/theme.cpp`
 - networking: `src/network.cpp`
-

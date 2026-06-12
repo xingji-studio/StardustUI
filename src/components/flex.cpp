@@ -1,3 +1,4 @@
+#include "../../includes/theme.hpp"
 #include "../../includes/components/flex.hpp"
 
 namespace {
@@ -30,7 +31,8 @@ FlexLayout::~FlexLayout() = default;
 void FlexLayout::draw(unsigned long long handle) {
     this->perform_layout();
 
-    const Sytel style = this->resolve_style();
+    Sytel style = stardustui::Theme::component_style("panel");
+    style.merge_from(this->resolve_style());
     const bool has_background = style.has_background_color();
     const bool has_border = style.has_border_width() && style.has_border_color() && style.get_border_width(0) > 0;
     const unsigned int border_width = has_border ? style.get_border_width(0) : 0;

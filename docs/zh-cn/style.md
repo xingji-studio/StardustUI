@@ -126,6 +126,11 @@ resolved_size = style.get_size(constructor_size);
 
 - `base_component`
 - `Lable`
+- `Button`
+- `Checkbox`
+- `RadioButton`
+- `TextBox`
+- `ScrollBar`
 - `Canvas`
 - `FlexLayout`
 
@@ -136,7 +141,20 @@ resolved_size = style.get_size(constructor_size);
 
 `Lable::contains(...)` 也会使用解析后的文字大小来计算 hover 命中区域。
 
-`Canvas` 和 `FlexLayout` 同样继承了这一套基础样式与重绘机制，但它们目前还不会自动把 `Sytel` 里的边框、背景色、圆角、内边距直接绘制出来。这部分更适合作为后续扩展继续完善。
+`Theme` 现在还支持在主题 JSON 里定义控件默认样式，例如：
+
+```json
+"components": {
+  "button": { "radius": 20, "padding": 12, "background_color": "primary" },
+  "textbox": { "radius": 12, "padding": 12, "border_color": "outline_variant" },
+  "checkbox": { "radius": 6, "border_width": 2, "color": "primary" },
+  "radio": { "radius": 10, "border_width": 2, "color": "primary" },
+  "panel": { "radius": 16, "padding": 16, "background_color": "surface_variant" },
+  "code_block": { "radius": 12, "padding": 12, "background_color": "inverse_surface" }
+}
+```
+
+这些默认值会先应用，再由控件自己的 `SytelRules` 覆盖。
 
 ## 相关文档
 
@@ -144,3 +162,6 @@ resolved_size = style.get_size(constructor_size);
 - [快速开始](./quickstart.md)
 - [布局系统](./layout.md)
 - [Canvas 控件](./canvas.md)
+- [Checkbox 控件](./checkbox.md)
+- [RadioButton 控件](./radiobutton.md)
+- [控件展示示例](./showcase.md)
