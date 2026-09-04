@@ -2,7 +2,9 @@
 *.o
 *.elf
 build/
-
+.idea
+.ninja_deps
+.ninja_log
 # Example outputs
 examples/*/build/
 
