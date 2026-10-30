@@ -357,8 +357,8 @@ int collect_faces(const TrueTypeFace** out_faces, int max_faces)
     }
 
 #ifdef XJ380
-    static const char* xj380_font_c = "/system/font/XJ380C.ttf";
-    static const char* xj380_font_f = "/system/font/XJ380F.ttf";
+    static const char* xj380_font_c = "/system/resources/font/XJ380C.ttf";
+    static const char* xj380_font_f = "/system/resources/font/XJ380F.ttf";
 
     if (count > 0) {
         return count;

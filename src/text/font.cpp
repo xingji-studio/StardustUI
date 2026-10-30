@@ -480,8 +480,8 @@ stardustui::string Font::resolve_font_path(const stardustui::string& path_or_nam
     }
 
     static const char* kSystemDirs[] = {
-        "/system/font",
-        "system/font"
+        "/system/resources/font",
+        "system/resources/font"
     };
 
     for (unsigned int index = 0; index < sizeof(kSystemDirs) / sizeof(kSystemDirs[0]); ++index) {
