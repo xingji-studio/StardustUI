@@ -20,13 +20,19 @@ struct TextMetrics {
     int line_gap;
     int min_y;
     int max_y;
+    int min_x;
+    int max_x;
+    int line_height;
 
-    TextMetrics() : width(0), height(0), ascent(0), descent(0), line_gap(0), min_y(0), max_y(0) {}
+    TextMetrics()
+        : width(0), height(0), ascent(0), descent(0), line_gap(0), min_y(0), max_y(0),
+          min_x(0), max_x(0), line_height(0) {}
 };
 
 struct FaceCache {
     TrueTypeFace face;
     bool ready;
+    unsigned int generation;
     const stardustui::File::byte* source_data;
     int source_size;
     bool source_is_default_memory;
@@ -35,6 +41,7 @@ struct FaceCache {
     FaceCache()
         : face(),
           ready(false),
+          generation(0),
           source_data(nullptr),
           source_size(0),
           source_is_default_memory(false),
@@ -283,7 +290,7 @@ bool load_cached_face(FaceCache& cache,
         return false;
     }
 
-    if (cache.ready &&
+    if (cache.ready && cache.generation == Font::default_font_generation() &&
         cache.source_data == data &&
         cache.source_size == size &&
         cache.source_is_default_memory == is_default_memory &&
@@ -293,6 +300,7 @@ bool load_cached_face(FaceCache& cache,
 
     cache.face.clear();
     cache.ready = cache.face.load(data, size);
+    cache.generation = Font::default_font_generation();
     cache.source_data = data;
     cache.source_size = size;
     cache.source_is_default_memory = is_default_memory;
@@ -314,7 +322,7 @@ bool load_cached_face_from_path(FaceCache& cache, const char* path)
         return false;
     }
 
-    if (cache.ready &&
+    if (cache.ready && cache.generation == Font::default_font_generation() &&
         cache.fallback_path != nullptr &&
         stardustui::string(cache.fallback_path).equals(path)) {
         return true;
@@ -322,6 +330,7 @@ bool load_cached_face_from_path(FaceCache& cache, const char* path)
 
     cache.face.clear();
     cache.ready = cache.face.load(stardustui::string(path));
+    cache.generation = Font::default_font_generation();
     cache.source_data = nullptr;
     cache.source_size = 0;
     cache.source_is_default_memory = false;
@@ -589,6 +598,55 @@ TextMetrics compute_metrics(const TrueTypeFace& face, unsigned int pixel_size)
     return metrics;
 }
 
+#ifdef XJ380
+struct ReferenceMetrics {
+    unsigned int generation;
+    unsigned int pixel_size;
+    int top;
+    int bottom;
+    ReferenceMetrics() : generation(0), pixel_size(0), top(0), bottom(0) {}
+};
+
+ReferenceMetrics calibrated_reference(const TrueTypeFace** faces, int face_count, unsigned int pixel_size,
+                                      const TextMetrics& fallback)
+{
+    static stardustui::vector<ReferenceMetrics>* cache = nullptr;
+    if (cache == nullptr) cache = new stardustui::vector<ReferenceMetrics>();
+    const unsigned int generation = Font::default_font_generation();
+    for (int i = 0; i < cache->size(); ++i) {
+        if ((*cache)[i].generation == generation && (*cache)[i].pixel_size == pixel_size) return (*cache)[i];
+    }
+    ReferenceMetrics result;
+    result.generation = generation;
+    result.pixel_size = pixel_size;
+    bool found = false;
+    const unsigned int references[] = {'H', 0x7530};
+    for (unsigned int i = 0; i < sizeof(references) / sizeof(references[0]); ++i) {
+        const ResolvedGlyph resolved = resolve_glyph(faces, face_count, references[i]);
+        if (resolved.face == nullptr || resolved.glyph_index == 0) continue;
+        const GlyphBitmap* glyph = get_glyph_bitmap(*resolved.face, resolved.glyph_index, pixel_size);
+        if (glyph == nullptr) continue;
+        for (int y = 0; y < glyph->height; ++y) {
+            bool ink = false;
+            for (int x = 0; x < glyph->width && !ink; ++x) ink = glyph->alpha[y * glyph->width + x] != 0;
+            if (!ink) continue;
+            const int top = glyph->offset_y + y;
+            if (!found || top < result.top) result.top = top;
+            if (!found || top + 1 > result.bottom) result.bottom = top + 1;
+            found = true;
+        }
+    }
+    if (!found) {
+        result.top = -fallback.ascent;
+        result.bottom = fallback.descent;
+    }
+    // Font changes also cover same-path reloads and memory allocator address reuse.
+    if (cache->size() >= 32 || (cache->size() && (*cache)[0].generation != generation)) cache->clear();
+    cache->push_back(result);
+    return result;
+}
+#endif
+
 bool measure_text_internal(const stardustui::string& text,
                            unsigned int pixel_size,
                            const TrueTypeFace** faces,
@@ -617,6 +675,15 @@ bool measure_text_internal(const stardustui::string& text,
     const int base_descent = out_metrics.descent;
     const int base_line_gap = out_metrics.line_gap;
     const int base_line_height = max_int(1, base_ascent + base_descent + base_line_gap);
+#ifdef XJ380
+    const ReferenceMetrics reference = calibrated_reference(faces, face_count, pixel_size, out_metrics);
+    out_metrics.ascent = -reference.top;
+    out_metrics.descent = reference.bottom;
+    out_metrics.height = max_int(1, reference.bottom - reference.top);
+    out_metrics.line_height = max_int(base_line_height, out_metrics.height + 1);
+    out_metrics.min_y = 0;
+    out_metrics.max_y = out_metrics.height;
+#endif
 
     const char* raw = text.c_str();
     if (raw == nullptr || raw[0] == '\0') {
@@ -629,7 +696,9 @@ bool measure_text_internal(const stardustui::string& text,
     int pen_y = 0;
     int min_y = 0;
     int max_y = out_metrics.height;
+#ifndef XJ380
     bool has_ink = false;
+#endif
 
     for (int index = 0; raw[index] != '\0';) {
         DecodedCodepoint decoded = decode_utf8(raw, index);
@@ -640,7 +709,11 @@ bool measure_text_internal(const stardustui::string& text,
                 max_width = current_width;
             }
             current_width = 0;
+#ifdef XJ380
+            pen_y += out_metrics.line_height;
+#else
             pen_y += base_line_height;
+#endif
             max_y = max_int(max_y, pen_y + out_metrics.height);
             continue;
         }
@@ -657,9 +730,21 @@ bool measure_text_internal(const stardustui::string& text,
 
         if (glyph.face != nullptr) {
             const GlyphBitmap* bitmap = get_glyph_bitmap(*glyph.face, glyph.glyph_index, pixel_size);
+#ifdef XJ380
+            if (bitmap != nullptr) advance = bitmap->advance;
+#endif
             if (bitmap != nullptr && bitmap->width > 0 && bitmap->height > 0) {
                 const int glyph_top = pen_y + out_metrics.ascent + bitmap->offset_y;
                 const int glyph_bottom = glyph_top + bitmap->height;
+#ifdef XJ380
+                // Preserve all overhangs; changing the string never moves its baseline.
+                min_y = glyph_top < min_y ? glyph_top : min_y;
+                max_y = max_int(max_y, glyph_bottom);
+                const int left = current_width + bitmap->offset_x;
+                const int right = left + bitmap->width;
+                out_metrics.min_x = left < out_metrics.min_x ? left : out_metrics.min_x;
+                out_metrics.max_x = max_int(out_metrics.max_x, right);
+#else
                 if (!has_ink) {
                     min_y = glyph_top;
                     max_y = glyph_bottom;
@@ -672,6 +757,7 @@ bool measure_text_internal(const stardustui::string& text,
                         max_y = glyph_bottom;
                     }
                 }
+#endif
             }
         }
 
@@ -682,6 +768,11 @@ bool measure_text_internal(const stardustui::string& text,
         max_width = current_width;
     }
     out_metrics.width = max_width;
+#ifdef XJ380
+    out_metrics.min_y = min_y;
+    out_metrics.max_y = max_y;
+    out_metrics.height += pen_y;
+#else
     if (has_ink) {
         out_metrics.min_y = min_y;
         out_metrics.max_y = max_y;
@@ -690,8 +781,24 @@ bool measure_text_internal(const stardustui::string& text,
         out_metrics.descent = max_int(0, max_y - base_ascent);
         out_metrics.line_gap = max_int(0, base_line_height - out_metrics.ascent - out_metrics.descent);
     }
+#endif
     return true;
 }
+}
+
+unsigned int measure_line_height(unsigned int pixel_size)
+{
+    const TrueTypeFace* faces[3] = {nullptr, nullptr, nullptr};
+    const int face_count = collect_faces(faces, 3);
+    TextMetrics metrics;
+    if (face_count <= 0 || !measure_text_internal(stardustui::string(), pixel_size, faces, face_count, metrics)) {
+        return pixel_size == 0 ? 16U : pixel_size;
+    }
+#ifdef XJ380
+    return static_cast<unsigned int>(max_int(1, metrics.line_height));
+#else
+    return static_cast<unsigned int>(max_int(1, metrics.ascent + metrics.descent + metrics.line_gap));
+#endif
 }
 
 bool measure_text(const stardustui::string& text, unsigned int pixel_size, unsigned int& out_width, unsigned int& out_height)
@@ -718,6 +825,8 @@ bool rasterize_text(const stardustui::string& text, unsigned int color, unsigned
 {
     out_bitmap.width = 0;
     out_bitmap.height = 0;
+    out_bitmap.origin_x = 0;
+    out_bitmap.origin_y = 0;
     out_bitmap.pixels.clear();
 
     const TrueTypeFace* faces[3] = {nullptr, nullptr, nullptr};
@@ -750,8 +859,15 @@ bool rasterize_text(const stardustui::string& text, unsigned int color, unsigned
         return false;
     }
 
+#ifdef XJ380
+    out_bitmap.origin_x = metrics.min_x;
+    out_bitmap.origin_y = metrics.min_y;
+    out_bitmap.width = max_int(metrics.width, metrics.max_x) - metrics.min_x;
+    out_bitmap.height = max_int(metrics.height, metrics.max_y) - metrics.min_y;
+#else
     out_bitmap.width = max_int(0, metrics.width);
     out_bitmap.height = max_int(1, metrics.height);
+#endif
     const int pixel_count = out_bitmap.width * out_bitmap.height;
     if (pixel_count <= 0) {
         return true;
@@ -772,7 +888,11 @@ bool rasterize_text(const stardustui::string& text, unsigned int color, unsigned
     }
 
     const int size = pixel_size == 0 ? 16 : static_cast<int>(pixel_size);
+#ifdef XJ380
+    const int line_height = metrics.line_height;
+#else
     const int line_height = max_int(1, metrics.ascent + metrics.descent + metrics.line_gap);
+#endif
     const int ascent = metrics.ascent;
     int pen_x = 0;
     int baseline_y = ascent;
@@ -801,12 +921,12 @@ bool rasterize_text(const stardustui::string& text, unsigned int color, unsigned
         }
 
         for (int y = 0; y < glyph->height; ++y) {
-            const int target_y = baseline_y + glyph->offset_y + y;
+            const int target_y = baseline_y + glyph->offset_y + y - out_bitmap.origin_y;
             if (target_y < 0 || target_y >= out_bitmap.height) {
                 continue;
             }
             for (int x = 0; x < glyph->width; ++x) {
-                const int target_x = pen_x + glyph->offset_x + x;
+                const int target_x = pen_x + glyph->offset_x + x - out_bitmap.origin_x;
                 if (target_x < 0 || target_x >= out_bitmap.width) {
                     continue;
                 }

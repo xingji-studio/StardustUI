@@ -7,6 +7,7 @@ namespace {
 stardustui::string* g_default_font_path = nullptr;
 stardustui::File::byte* g_default_font_data = nullptr;
 int g_default_font_data_size = 0;
+unsigned int g_default_font_generation = 1;
 
 stardustui::string& default_font_path_storage()
 {
@@ -372,6 +373,7 @@ bool Font::set_default_font_path(const stardustui::string& path)
     }
     g_default_font_data_size = 0;
     default_font_path_storage() = resolved_path;
+    ++g_default_font_generation;
     return true;
 }
 
@@ -400,6 +402,7 @@ bool Font::set_default_font_memory(const stardustui::File::byte* data, int size)
     g_default_font_data = bytes;
     g_default_font_data_size = size;
     default_font_path_storage().assign("");
+    ++g_default_font_generation;
     return true;
 }
 
@@ -413,6 +416,12 @@ void Font::clear_default_font()
         g_default_font_data = nullptr;
     }
     g_default_font_data_size = 0;
+    ++g_default_font_generation;
+}
+
+unsigned int Font::default_font_generation()
+{
+    return g_default_font_generation;
 }
 
 bool Font::has_default_font()

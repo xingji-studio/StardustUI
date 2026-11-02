@@ -1,3 +1,4 @@
+#include "../../includes/text/text_renderer.hpp"
 #include "../../includes/components/textbox.hpp"
 #include "../../settings.hpp"
 #include "../../platforms/platform.hpp"
@@ -368,9 +369,15 @@ void TextBox::invalidate_layout() {
 }
 
 int TextBox::get_line_height(unsigned int text_size) const {
+#ifdef XJ380
+    // Labels use a reference box; multiline content needs the full font line
+    // height so the next row's solid background cannot erase overhanging ink.
+    return max_int(18, static_cast<int>(stardustui::text::measure_line_height(text_size)) + 2);
+#else
     stardustui::string sample("gjpqyAQ");
     const int measured = static_cast<int>(calc_text_height(sample, text_size));
     return max_int(18, measured + 2);
+#endif
 }
 
 int TextBox::get_scrollbar_width() const {

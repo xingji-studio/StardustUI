@@ -337,6 +337,16 @@ bool TrueTypeFace::parse_tables()
     ascender_value = read_s16(os2_offset + 68);
     descender_value = read_s16(os2_offset + 70);
     line_height_value = ascender_value - descender_value;
+#ifdef XJ380
+    // Typographic metrics may intentionally omit accented/descending ink. Keep
+    // the larger hhea row span as well, and preserve each table's line gap.
+    const int typo_gap = read_s16(os2_offset + 72);
+    const int hhea_gap = read_s16(hhea_offset + 8);
+    const int typo_height = line_height_value + (typo_gap > 0 ? typo_gap : 0);
+    const int hhea_height = read_s16(hhea_offset + 4) - read_s16(hhea_offset + 6) +
+                            (hhea_gap > 0 ? hhea_gap : 0);
+    line_height_value = typo_height > hhea_height ? typo_height : hhea_height;
+#endif
     const int os2_version = read_u16(os2_offset);
     x_height_value = os2_version >= 2 ? read_s16(os2_offset + 86) : 0;
     index_to_loc_format = read_u16(head_offset + 50);

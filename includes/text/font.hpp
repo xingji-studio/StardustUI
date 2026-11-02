@@ -28,6 +28,7 @@ public:
     static bool set_default_font_memory(const stardustui::File::byte* data, int size);
     static void clear_default_font();
     static bool has_default_font();
+    static unsigned int default_font_generation();
     static const stardustui::string& default_font_path();
     static const stardustui::File::byte* default_font_data();
     static int default_font_data_size();

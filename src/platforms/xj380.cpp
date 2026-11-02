@@ -480,9 +480,13 @@ struct CachedPlatformTextBitmap {
     unsigned int size;
     int width;
     int height;
+    int origin_x;
+    int origin_y;
+    unsigned int generation;
     stardustui::vector<XCOLORA> pixels;
 
-    CachedPlatformTextBitmap() : text(), color(0), size(0), width(0), height(0), pixels() {}
+    CachedPlatformTextBitmap()
+        : text(), color(0), size(0), width(0), height(0), origin_x(0), origin_y(0), generation(0), pixels() {}
 };
 
 bool should_cache_platform_text(const stardustui::string& text, int width, int height)
@@ -523,7 +527,8 @@ CachedPlatformTextBitmap* find_cached_platform_text(const stardustui::string& te
     stardustui::vector<CachedPlatformTextBitmap>& cache = platform_text_cache();
     for (int index = 0; index < cache.size(); ++index) {
         CachedPlatformTextBitmap& entry = cache[index];
-        if (entry.color == color && entry.size == size && entry.text.equals(text.c_str())) {
+        if (entry.generation == Font::default_font_generation() && entry.color == color &&
+            entry.size == size && entry.text.equals(text.c_str())) {
             return &entry;
         }
     }
@@ -545,6 +550,9 @@ CachedPlatformTextBitmap* cache_platform_text(const stardustui::string& text,
     entry.size = size;
     entry.width = bitmap.width;
     entry.height = bitmap.height;
+    entry.origin_x = bitmap.origin_x;
+    entry.origin_y = bitmap.origin_y;
+    entry.generation = Font::default_font_generation();
     const int pixel_count = bitmap.width * bitmap.height;
     if (pixel_count > 0 && !entry.pixels.reserve(pixel_count)) {
         return nullptr;
@@ -1102,7 +1110,8 @@ void draw_text(unsigned long long handle, int x, int y, unsigned int color, unsi
                 transient_pixels[index].Alpha = static_cast<UINT8>(source & 0xFFu);
             }
 
-            blend_and_write_platform_text(handle, x, y, transient_width, transient_height, transient_pixels);
+            blend_and_write_platform_text(handle, x + bitmap.origin_x, y + bitmap.origin_y,
+                                          transient_width, transient_height, transient_pixels);
             delete[] transient_pixels;
             return;
         }
@@ -1113,8 +1122,8 @@ void draw_text(unsigned long long handle, int x, int y, unsigned int color, unsi
     }
 
     blend_and_write_platform_text(handle,
-                                  x,
-                                  y,
+                                  x + cached->origin_x,
+                                  y + cached->origin_y,
                                   cached->width,
                                   cached->height,
                                   cached->pixels.size() > 0 ? &cached->pixels[0] : nullptr);
@@ -1160,8 +1169,8 @@ void draw_text_on_solid_background(unsigned long long handle,
             }
 
             write_platform_text_on_solid_background(handle,
-                                                    x,
-                                                    y,
+                                                    x + bitmap.origin_x,
+                                                    y + bitmap.origin_y,
                                                     transient_width,
                                                     transient_height,
                                                     background_color,
@@ -1176,8 +1185,8 @@ void draw_text_on_solid_background(unsigned long long handle,
     }
 
     write_platform_text_on_solid_background(handle,
-                                            x,
-                                            y,
+                                            x + cached->origin_x,
+                                            y + cached->origin_y,
                                             cached->width,
                                             cached->height,
                                             background_color,
